@@ -1,0 +1,106 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- Standard Meta -->
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <!-- Site Properties -->
+  <title>Tesla Coil</title>
+  <link rel="stylesheet" type="text/css" href="/static/semantic.css">
+  <link rel="stylesheet" type="text/css" href="/static/grid.css">
+</head>
+<body>
+
+<div class="ui container">
+  <div class="ui inverted menu">
+    <div class="header item">Tesla Coil</div>
+  </div>
+
+  <div class="ui grid">
+    <div class="sixteen wide column">
+      <h2 class="ui dividing header">Node Information</h2>
+      <div id="connection-lost" class="ui negative message hidden">
+	<div class="header">
+	  Connection to Lightning Node lost
+	</div>
+	<p>
+	  We seem to have lost the connection to the lightning daemon,
+	  please wait or restart the node.
+	</p>
+      </div>
+    <table id="nodeinfo" class="ui celled table">
+      <thead>
+	<tr>
+	  <th>Node ID</th>
+	  <th>Version</th>
+	  <th>Port</th>
+	  <th>Testnet</th>
+	</tr>
+      </thead>
+      <tbody>
+	<tr>
+	</tr>
+      </tbody>
+    </table>
+      
+    </div>
+  </div>
+  <div class="ui grid">
+    <div class="sixteen wide column">
+      <h2 class="ui dividing header">Peers
+</h2>
+<button class="ui icon button open-connect-modal positive">
+  <i class="add circle icon"></i> Connect
+</button>
+      <table class="ui celled table" id="peersTbl">
+	<thead>
+	  <tr>
+	    <th class="ui center">Peer ID</th>
+	    <th class="ui center">Connected</th>
+	    <th class="ui center">State</th>
+	  </tr>
+	</thead>
+	<tbody>
+	</tbody>
+      </table>
+    </div>
+</div>
+</div>
+</div>
+<script src="/static/jquery.min.js"></script>
+<script src="/static/d3.v3.min.js"></script>
+<script src="/static/semantic.min.js"></script>
+<script language="javascript" src="/static/main.js"></script>
+
+<div id="connect-dialog" class="ui modal">
+  <div class="header">Connect to node</div>
+  <div class="content">
+    <p>
+      <form class="ui form">
+	<div class="two fields">
+	  <div class="field required">
+	    <label>Remote Address / IP</label>
+	    <input type="text" name="address" placeholder="127.0.0.1">
+	  </div>
+	  <div class="field required">
+	    <label>Remote Port</label>
+	    <input type="text" name="port" value="8334">
+	  </div>
+	</div>
+	<div class="field required">
+	  <label>Channel Capacity (Satoshi)</label>
+	  <input type="text" name="capacity" value="100000">
+	</div>
+      </form>
+    </p>
+  </div>
+  <div class="actions">
+    <div class="ui approve green button">Connect</div>
+    <div class="ui cancel button">Cancel</div>
+  </div>
+</div>
+</body>
+</html>
