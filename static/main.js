@@ -3,72 +3,77 @@ var stateColors = {
   STATE_ERR_BREAKDOWN: "negative",
   STATE_CLOSE_ONCHAIN_OUR_UNILATERAL: "negative",
   STATE_OPEN_WAITING_OURANCHOR: "warning",
+  STATE_OPEN_WAITING_THEIRANCHOR: "warning",
   STATE_OPEN_WAITING_OURANCHOR_THEYCOMPLETED: "warning",
   STATE_ERR_INFORMATION_LEAK: "negative",
   STATE_NORMAL_COMMITTING: "positive"
 };
 
-function updatePeerTable() {
-  params = {"method": "LightningRpc.GetPeers", "params": [], "jsonrpc": "2.0", "id": 0}
-
-  d3.xhr('/rpc/').header("Content-Type", "application/json")
+function d3jsonrpc(url, method, args, cb) {
+  params = {"method": method, "params": args, "jsonrpc": "2.0", "id": 0}
+  d3.xhr('/rpc/').header("Content-Type", "application/json").header("Accept", "application/json")
     .post(JSON.stringify(params),
     function (error, data) {
-      data = JSON.parse(data.responseText);
-
-    var columns = {
-      'name': {
-        'text': function(obj, c){return obj[c]}
-      },
-      'connected': {
-        'text': function(obj, c){return obj[c]}
-      },
-      'state': {
-        'text': function(obj, c){return obj[c]}
+      if (!error){
+        data = JSON.parse(data.responseText);
+        cb(data.error, data.result)
+      } else {
+        cb(error, null)
       }
-    };
-    
-    var tbody = d3.select('#peersTbl > tbody');
-    var rows = tbody.selectAll("tr").data(data.result.peers);
-    rows.enter().append("tr");
-    rows.exit().remove();
-    rows.html(function(d) {
-      return ("<td>" + 
-      d.peerid + "</td><td>"+ d.connected+"</td><td>" + 
-      d.state  + "</td></tr>");
-    });
-    rows.attr('class', function(d){ return stateColors[d.state]; });
+    }
+  );
+}
+
+function updatePeerTable() {
+  d3jsonrpc('/rpc/', "LightningRpc.GetPeers", {}, function(error, data){
+    if (error) {
+      console.log(error);
+    } else {
+      var tbody = d3.select('#peersTbl > tbody');
+      var rows = tbody.selectAll("tr").data(data.peers);
+      rows.enter().append("tr");
+      rows.exit().remove();
+      rows.html(function(d) {
+        return ("<td>" + 
+                d.peerid + "</td><td>"+ d.connected+"</td><td>" + 
+                d.state +"</td><td><button class='ui icon button open-connect-modal negative tiny disconnect-button' data-peerid='" + d.peerid + "'><i class='minus circle icon'></i> Disconnect</button></td></tr>");
+      });
+      rows.attr('class', function(d){ return stateColors[d.state]; });;
+    }
   });
 }
 
 function updateInfo(){
-  params = {"method": "LightningRpc.GetInfo", "params": [], "jsonrpc": "2.0", "id": 0}
-  d3.xhr('/rpc/').header("Content-Type", "application/json")
-    .post(JSON.stringify(params),
-    function(error, r){
-      r = JSON.parse(r.responseText)
-      var row = d3.select("#nodeinfo tbody tr")
-      var data = [r.result.id, r.result.version, r.result.port, r.result.testnet];      
-      if(r.error != null){
-        $('#nodeinfo').removeClass('green').addClass("red");
-        $("#connection-lost").show()
-        data = [];
-      }else{
-        $('#nodeinfo').removeClass("red").addClass("green");
-        $("#connection-lost").hide()
-      }
+  d3jsonrpc("/rpc/", "LightningRpc.GetInfo", {}, function(error, r){
+    var row = d3.select("#nodeinfo tbody tr")
+    var data = [r.id, r.version, r.port, r.testnet];      
+    if(r.error != null){
+      $('#nodeinfo').removeClass('green').addClass("red");
+      $("#connection-lost").show()
+      data = [];
+    }else{
+      $('#nodeinfo').removeClass("red").addClass("green");
+      $("#connection-lost").hide()
+    }
+    
+    row.selectAll("td").data(data).enter().append("td");
+    row.selectAll("td").data(data).exit().remove();
+    row.selectAll("td").text(function(e){return e;});
+  });
 
-      row.selectAll("td").data(data).enter().append("td");
+  d3jsonrpc("/rpc/", "Bitcoin.GetInfo", {}, function(error, r){
+      var row = d3.select("#btcinfo tbody tr")
+      var data = [r.version, r.blocks, r.connections, r.balance];
+            row.selectAll("td").data(data).enter().append("td");
       row.selectAll("td").data(data).exit().remove();
       row.selectAll("td").text(function(e){return e;});
-    }
-  );
-  params = {"method": "Bitcoin.GetInfo", "params": [], "jsonrpc": "2.0", "id": 0}
-  d3.xhr('/rpc/').header("Content-Type", "application/json")
-    .post(JSON.stringify(params),
-    function(error, r){
-      r = JSON.parse(r.responseText)
-      console.log(r)
+      if(r.error != null){
+        $('#btcinfo').removeClass('green').addClass("red");
+        data = [];
+      }else{
+        $('#btcinfo').removeClass("red").addClass("green");
+      }
+
   });
 }
 
@@ -79,65 +84,90 @@ function serializeFormData(form) {
          }, {});
 }
 
+$('#peersTbl').on('click', '.disconnect-button', function(e) {
+  var peerid = $(e.target).data('peerid');
+  console.log("Disconnecting", peerid)
+  d3jsonrpc('/rpc/', 'LightningRpc.Close', {"peerid": peerid}, function(error, data){
+    console.log("Disconnected", data, error);
+  });
+});
+
+var sendPaymentData = null;
+
 $(document).ready(function(){
-  window.setInterval(updatePeerTable, 1000);
+  window.setInterval(updatePeerTable, 10000);
   updatePeerTable()
-  window.setInterval(updateInfo, 5000);
+  window.setInterval(updateInfo, 10000);
   updateInfo();
 
 
   $('.open-connect-modal').click(function(){
     $("#connect-dialog").modal("show");
   });
+  $('#send-button').click(function(){
+    $('#send-dialog').modal('show');
+  });
 
-  $('#connect-dialog').modal({
-    onApprove: function(e){
-      if($("#connect-dialog .error").length > 0)
-        return false;
-
-      var data = serializeFormData($('#connect-dialog form'));
-      $.post(
-        "/rpc/echo",{
-          data: JSON.stringify({
-            id: 1,
-            method: "connect",
-            params: data
-          })
-        },
-        function(e){}
-      );
-      return true;
+  $('#send-dialog form').form({
+    on: 'blur',
+    fields: {
+      destination: ['exactLength[66]'],
+      paymenthash: ['exactLength[64]'],
+      amount: ['integer[1..4000000000]']
+    },
+    onSuccess: function (e) {
+      var form = $(e.target);
+      sendPaymentData = {
+        destination: form.find('input[name="destination"]').val(),
+        amount: parseInt(form.find('input[name="amount"]').val()),
+        paymenthash: form.find('input[name="paymenthash"]').val(),
+        route: null
+      };
+      d3jsonrpc('/rpc/', 'LightningRpc.GetRoute', {
+        amount: sendPaymentData.amount,
+        destination: sendPaymentData.destination,
+        risk: 1
+      },function(error, data){
+          if (error) {
+            var errors = $(e.target).closest('.modal').find('.error').first();
+            errors.show().append("<ul><li>Error computing route: " + error.message + "</li></ul>");
+          } else {
+            $(e.target).closest('.modal').modal('hide');
+          }
+          console.log(data);
+        });
+      return false;
     }
   });
 
+  $('#receive-button').click(function(){
+    $('#receive-dialog').modal('show');
+  });
+
+  /* Instead of closing the modal, look for a form in it and submit that instead */
+  $('.modal').modal({
+    onApprove : function(e) {
+      $(e).closest(".modal").find("form").submit();
+      return false;
+    }
+  });
+  
   $('#connect-dialog form').form({
     on: 'blur',
     fields: {
-      capacity: {
-        identifier: 'capacity',
-        rules: [{
-          type   : 'integer[100000..4000000]',
-          prompt : ''
-        }]
-      },
-      address: {
-        identifier: 'address',
-        rules: [
-          {
-            type   : 'empty',
-            prompt : 'Please enter a node address'
-          }
-        ]
-      },
-      port: {
-        identifier: 'port',
-        rules: [
-          {
-            type   : 'integer[1..65535]',
-            prompt : 'This is not a valid port.'
-          }
-        ]
+      capacity: 'integer[100000..4000000]',
+      host: ['empty'],
+      port: 'integer[1..65535]'
+    },
+    onSuccess: function(e){
+      var data = serializeFormData($('#connect-dialog form'));
+      data.async = true;
+      data.port = parseInt(data.port);
+      data.capacity = parseInt(data.capacity);
+      d3jsonrpc("/rpc/", "Node.ConnectPeer", data, function(error, data){});
+      $(e.target).closest('.modal').modal('hide');
+      return false;
       }
-    }
   });
-});
+
+}); /* EOF onload */

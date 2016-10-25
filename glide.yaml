@@ -2,4 +2,5 @@ package: github.com/cdecker/lightningctl
 import:
 - package: github.com/Sirupsen/logrus
   version: ~0.10.0
-- package: github.com/btcsuite/btcrpcclient
+- package: github.com/powerman/rpc-codec/jsonrpc2
+  version: b12587c9f0f1616a11abaa9f576238176fef2740

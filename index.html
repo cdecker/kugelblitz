@@ -8,15 +8,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
   <!-- Site Properties -->
-  <title>Tesla Coil</title>
+  <title>Kugelblitz</title>
   <link rel="stylesheet" type="text/css" href="/static/semantic.css">
   <link rel="stylesheet" type="text/css" href="/static/grid.css">
+  <link rel="shortcut icon" type="image/png" href="/static/favicon.png"/>
 </head>
 <body>
 
 <div class="ui container">
   <div class="ui inverted menu">
-    <div class="header item">Tesla Coil</div>
+    <div class="header item">Kugelblitz</div>
   </div>
 
   <div class="ui grid">
@@ -31,13 +32,37 @@
 	  please wait or restart the node.
 	</p>
       </div>
-    <table id="nodeinfo" class="ui celled table">
+
+      <h4 class="ui horizontal divider header">
+	<i class="tag lightning"></i>
+	Lightning Node
+      </h4>
+      <table id="nodeinfo" class="ui celled table">
+	<thead>
+	  <tr>
+	    <th>Node ID</th>
+	    <th>Version</th>
+	    <th>Port</th>
+	    <th>Testnet</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  <tr>
+	  </tr>
+	</tbody>
+      </table>
+      
+      <h4 class="ui horizontal divider header">
+	<i class="tag bitcoin"></i>
+	Bitcoin Node
+      </h4>
+    <table id="btcinfo" class="ui celled table">
       <thead>
 	<tr>
-	  <th>Node ID</th>
 	  <th>Version</th>
-	  <th>Port</th>
-	  <th>Testnet</th>
+	  <th>Blocks</th>
+	  <th>Connections</th>
+	  <th>Balance</th>
 	</tr>
       </thead>
       <tbody>
@@ -48,6 +73,15 @@
       
     </div>
   </div>
+  <div class="ui grid">
+    <div class="sixteen wide column">
+      <div class="ui buttons fluid">
+	<button id="receive-button" class="ui blue button" style="border-right: 1px white solid;"><i class="arrow circle down icon"></i> Receive payment</button>
+	<button id="send-button" class="ui positive button" style="border-left: 1px white solid;"><i class="arrow circle up icon"></i>Send payment</button>
+      </div>
+    </div>
+  </div>
+
   <div class="ui grid">
     <div class="sixteen wide column">
       <h2 class="ui dividing header">Peers
@@ -61,6 +95,7 @@
 	    <th class="ui center">Peer ID</th>
 	    <th class="ui center">Connected</th>
 	    <th class="ui center">State</th>
+	    <th class="ui center">Action</th>
 	  </tr>
 	</thead>
 	<tbody>
@@ -75,15 +110,44 @@
 <script src="/static/semantic.min.js"></script>
 <script language="javascript" src="/static/main.js"></script>
 
-<div id="connect-dialog" class="ui modal">
-  <div class="header">Connect to node</div>
+<div id="send-dialog" class="ui modal">
+  <div class="header">Send payment</div>
+  <div class="content">
+    <p>
+      <form class="ui form">
+	<div class="field required">
+	  <label>Destination Node ID</label>
+	  <input type="text" name="destination" placeholder="">
+	</div>
+	<div class="two fields">
+	  <div class="field required">
+	    <label>Invoice ID</label>
+	    <input type="text" name="paymenthash" placeholder="">
+	  </div>
+	  <div class="field required">
+	    <label>Amount (millisatoshi)</label>
+	    <input type="text" name="amount">
+	  </div>
+	</div>
+	<div class="ui error message"></div>
+      </form>
+    </p>
+  </div>
+  <div class="actions">
+    <div class="ui approve green button">Send</div>
+    <div class="ui cancel button">Cancel</div>
+  </div>
+</div>
+
+<div id="receive-dialog" class="ui modal">
+  <div class="header">Create invoice / Receive payment</div>
   <div class="content">
     <p>
       <form class="ui form">
 	<div class="two fields">
 	  <div class="field required">
 	    <label>Remote Address / IP</label>
-	    <input type="text" name="address" placeholder="127.0.0.1">
+	    <input type="text" name="host" placeholder="127.0.0.1">
 	  </div>
 	  <div class="field required">
 	    <label>Remote Port</label>
@@ -94,6 +158,35 @@
 	  <label>Channel Capacity (Satoshi)</label>
 	  <input type="text" name="capacity" value="100000">
 	</div>
+      </form>
+    </p>
+  </div>
+  <div class="actions">
+    <div class="ui approve green button">Send</div>
+    <div class="ui cancel button">Cancel</div>
+  </div>
+</div>
+
+<div id="connect-dialog" class="ui modal">
+  <div class="header">Connect to node</div>
+  <div class="content">
+    <p>
+      <form class="ui form">
+	<div class="two fields">
+	  <div class="field required">
+	    <label>Remote Address / IP</label>
+	    <input type="text" name="host" placeholder="127.0.0.1">
+	  </div>
+	  <div class="field required">
+	    <label>Remote Port</label>
+	    <input type="text" name="port" value="8334">
+	  </div>
+	</div>
+	<div class="field required">
+	  <label>Channel Capacity (Satoshi)</label>
+	  <input type="text" name="capacity" value="100000">
+	</div>
+	<div class="ui error message"></div>
       </form>
     </p>
   </div>

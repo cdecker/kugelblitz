@@ -3,6 +3,8 @@ package coil
 import (
 	"net"
 	"net/rpc/jsonrpc"
+
+	"github.com/powerman/rpc-codec/jsonrpc2"
 )
 
 type LightningRpc struct {
@@ -17,10 +19,11 @@ type NewAddressResponse struct {
 }
 
 type GetInfoResponse struct {
-	Id      string `json:"id"`
-	Port    uint   `json:"port"`
-	Testnet bool   `json:"testnet"`
-	Version string `json:"version"`
+	Id          string `json:"id"`
+	Port        uint   `json:"port"`
+	Testnet     bool   `json:"testnet"`
+	Version     string `json:"version"`
+	BlockHeight uint   `json:"blockheight"`
 }
 
 type GetPeersResult struct {
@@ -38,12 +41,12 @@ type Peer struct {
 }
 
 func (lr *LightningRpc) call(method string, req interface{}, res interface{}) error {
-	client, err := jsonrpc.Dial("unix", lr.socketPath)
+	clientTCP, err := jsonrpc2.Dial("unix", lr.socketPath)
 	if err != nil {
 		return err
 	}
-	defer client.Close()
-	err = client.Call(method, req, res)
+	defer clientTCP.Close()
+	err = clientTCP.Call(method, req, res)
 	return err
 }
 
@@ -96,24 +99,52 @@ func (lr *LightningRpc) GetPeers(_ *Empty, res *GetPeersResponse) error {
 	return err
 }
 
-func (lr *LightningRpc) Connect(req *ConnectRequest, res *GetPeersResponse) error {
-	client, err := jsonrpc.Dial("unix", lr.socketPath)
-	if err != nil {
-		return err
-	}
-	defer client.Close()
-	err = client.Call("getpeers", Empty{}, res)
-	return err
+func (lr *LightningRpc) Connect(req *ConnectRequest, res *ConnectResponse) error {
+	var params []interface{}
+	params = append(params, req.Host)
+	params = append(params, req.Port)
+	params = append(params, req.FundingTxHex)
+	return lr.call("connect", params, res)
+}
+
+type PeerReference struct {
+	PeerId string `json:"peerid"`
+}
+
+func (lr *LightningRpc) Close(req *PeerReference, res *Empty) error {
+	var params []interface{}
+	params = append(params, req.PeerId)
+	return lr.call("close", params, res)
+}
+
+type RouteHop struct {
+	NodeId string `json:"id"`
+	Amount uint64 `json:"msatoshi"`
+	Delay  uint32 `json:"delay"`
 }
 
 type Route struct {
+	Hops []RouteHop `json:"route"`
+}
+
+type GetRouteRequest struct {
+	Destination string  `json:"destination"`
+	Amount      uint64  `json:"amount"`
+	RiskFactor  float32 `json:"risk"`
+}
+
+func (lr *LightningRpc) GetRoute(req *GetRouteRequest, res *Route) error {
+	var params []interface{}
+	params = append(params, req.Destination)
+	params = append(params, req.Amount)
+	params = append(params, req.RiskFactor)
+	return lr.call("getroute", params, res)
 }
 
 type ConnectRequest struct {
 	Host         string `json:"host"`
 	Port         uint   `json:"port"`
 	FundingTxHex string `json:"tx"`
-	Async        bool   `json:"async"`
 }
 
 type ConnectResponse struct {

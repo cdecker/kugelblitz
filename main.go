@@ -7,23 +7,15 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/rpc"
-	"net/rpc/jsonrpc"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/btcsuite/btcrpcclient"
 	"github.com/cdecker/lightningctl/coil"
+	"github.com/powerman/rpc-codec/jsonrpc2"
 )
 
 var (
-	lightning *coil.LightningRpc
-	connCfg   = &btcrpcclient.ConnConfig{
-		Host:         "localhost:18332",
-		User:         "rpcuser",
-		Pass:         "rpcpass",
-		HTTPPostMode: true, // Bitcoin core only supports HTTP POST mode
-		DisableTLS:   true, // Bitcoin core does not provide TLS by default
-	}
+	lightning  *coil.LightningRpc
 	bitcoinRpc *coil.Bitcoin
 )
 
@@ -46,8 +38,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func staticHandler(w http.ResponseWriter, r *http.Request) {
-	c, err := ioutil.ReadFile(r.RequestURI[8:])
+	c, err := ioutil.ReadFile("static/" + r.RequestURI[8:])
 	if err != nil {
+		log.Errorf("Error reading static resource: %v", err)
 		http.Error(w, fmt.Sprintf("%v", err), 404)
 	}
 	if strings.HasSuffix(r.RequestURI, ".css") {
@@ -71,24 +64,15 @@ func main() {
 	log.SetLevel(log.DebugLevel)
 
 	lightning = coil.NewLightningRpc(*lightningSock)
-	bitcoinRpc = coil.NewBitcoinRpc()
+	bitcoinRpc = coil.NewBitcoinRpc("http://rpcuser:rpcpass@localhost:18332")
+	nodeRpc := coil.NewNode(lightning, bitcoinRpc)
 
 	rpc.Register(bitcoinRpc)
 	rpc.Register(lightning)
+	rpc.Register(nodeRpc)
 
 	http.HandleFunc("/", handler)
-	http.HandleFunc("/rpc/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		serverCodec := jsonrpc.NewServerCodec(&HttpConn{in: r.Body, out: w})
-		w.Header().Set("Content-type", "application/json")
-		w.WriteHeader(200)
-		err := rpc.ServeRequest(serverCodec)
-		if err != nil {
-			log.Printf("Error while serving JSON request: %v", err)
-			http.Error(w, "Error while serving JSON request, details have been logged.", 500)
-			return
-		}
-
-	}))
+	http.Handle("/rpc/", jsonrpc2.HTTPHandler(nil))
 	http.HandleFunc("/static/", staticHandler)
 	http.ListenAndServe(":8000", nil)
 }

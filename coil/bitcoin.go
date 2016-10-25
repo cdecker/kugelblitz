@@ -5,14 +5,21 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os/exec"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 type Bitcoin struct {
 	network string
+	url     string
+}
+
+type Node struct {
+	lightningRpc *LightningRpc
+	bitcoinRpc   *Bitcoin
 }
 
 type GetBInfoResponse struct {
@@ -32,14 +39,49 @@ type GetBInfoResponse struct {
 	Errors          string  `json:"errors"`
 }
 
+type ConnectPeerRequest struct {
+	Host     string `json:"host"`
+	Port     uint   `json:"port"`
+	Capacity uint64 `json:"capacity"`
+	Async    bool   `json:"async"`
+}
+
 type HttpConn struct {
 	in  io.Reader
 	out io.Writer
 }
 
+type SendToAddressRequest struct {
+	Address string `json:"address"`
+	Amount  string `json:"amount"`
+}
+
+type TxReference struct {
+	TransactionId string `json:"txid"`
+}
+
+type GetRawTransactionResponse struct {
+	RawTransaction string `json:"rawtx"`
+}
+
 func (c *HttpConn) Read(p []byte) (n int, err error)  { return c.in.Read(p) }
 func (c *HttpConn) Write(d []byte) (n int, err error) { return c.out.Write(d) }
 func (c *HttpConn) Close() error                      { return nil }
+
+func (b *Bitcoin) SendToAddress(req *SendToAddressRequest, res *TxReference) error {
+	var params []interface{}
+	params = append(params, req.Address)
+	params = append(params, req.Amount)
+
+	return b.call("sendtoaddress", params, &res.TransactionId)
+}
+
+func (b *Bitcoin) GetRawTransaction(req *TxReference, res *GetRawTransactionResponse) error {
+	var params []interface{}
+	params = append(params, req.TransactionId)
+
+	return b.call("getrawtransaction", params, &res.RawTransaction)
+}
 
 func (b *Bitcoin) call(method string, params []interface{}, res interface{}) error {
 	request := map[string]interface{}{
@@ -60,7 +102,7 @@ func (b *Bitcoin) call(method string, params []interface{}, res interface{}) err
 	if err != nil {
 		return err
 	}
-	resp, err := http.Post("http://rpcuser:rpcpass@localhost:18332",
+	resp, err := http.Post(b.url,
 		"application/json", strings.NewReader(string(data)))
 	if err != nil {
 		return err
@@ -86,9 +128,10 @@ func (b *Bitcoin) GetInfo(_ *Empty, response *GetBInfoResponse) error {
 	return b.call("getinfo", nil, response)
 }
 
-func NewBitcoinRpc() *Bitcoin {
+func NewBitcoinRpc(url string) *Bitcoin {
 	return &Bitcoin{
 		network: "-testnet",
+		url:     url,
 	}
 }
 
@@ -102,33 +145,52 @@ func (bc *Bitcoin) exec(method string, args []string) (string, error) {
 	return strings.TrimSpace(string(out[:])), nil
 }
 
-/*
-func (bc *Bitcoin) ConnectPeer(rpc *LightningRpc, host string, port uint) error {
-	log.Debug("Connecting to %s:%d", host, port)
-	addr, err := rpc.NewAddress()
-	fmt.Println(addr)
+func NewNode(lrpc *LightningRpc, brpc *Bitcoin) *Node {
+	return &Node{
+		lightningRpc: lrpc,
+		bitcoinRpc:   brpc,
+	}
+}
+
+func (n *Node) ConnectPeer(req *ConnectPeerRequest, res *Empty) error {
+	log.Debugf("Connecting to %s:%d", req.Host, req.Port)
+	var addrResp NewAddressResponse
+	err := n.lightningRpc.NewAddress(&Empty{}, &addrResp)
 	if err != nil {
+		log.Error(err)
 		return err
 	}
 
-	c := exec.Command("/usr/local/bin/bitcoin-cli", "-testnet", "sendtoaddress", addr, "0.01")
-	out, err := c.CombinedOutput()
+	var sendResp TxReference
+	err = n.bitcoinRpc.SendToAddress(&SendToAddressRequest{
+		Address: addrResp.Address,
+		Amount:  fmt.Sprintf("%f", float64(req.Capacity)*10e-8),
+	}, &sendResp)
 	if err != nil {
-		return fmt.Errorf("Error sending funds to P2SH: %s", err)
+		log.Error(err)
+		return err
 	}
-	outs := strings.TrimSpace(string(out[:]))
-	c = exec.Command("/usr/local/bin/bitcoin-cli", "-testnet", "getrawtransaction", outs)
-	out, err = c.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("Error getting raw transaction: %s", err)
-	}
-	outs = strings.TrimSpace(string(out[:]))
-	fmt.Printf("%s, %v\n", out, err)
 
-	err = rpc.Connect(host, port, outs)
+	var rawResp GetRawTransactionResponse
+	err = n.bitcoinRpc.GetRawTransaction(&sendResp, &rawResp)
 	if err != nil {
-		return fmt.Errorf("Error connecting: %s", err)
+		log.Error(err)
+		return err
 	}
+
+	// Finally we need to tell lightningd to connect to that node
+	// with the funds provided
+	connReq := &ConnectRequest{
+		Host:         req.Host,
+		Port:         req.Port,
+		FundingTxHex: rawResp.RawTransaction,
+	}
+	if req.Async {
+		log.Debugf("Calling lightning.connect with %#v", connReq)
+		go n.lightningRpc.Connect(connReq, &ConnectResponse{})
+	} else {
+		return n.lightningRpc.Connect(connReq, &ConnectResponse{})
+	}
+
 	return nil
 }
-*/
