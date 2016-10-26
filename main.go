@@ -10,13 +10,14 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/cdecker/lightningctl/coil"
+	"github.com/cdecker/kugelblitz/bitcoinrpc"
+	"github.com/cdecker/kugelblitz/lightningrpc"
 	"github.com/powerman/rpc-codec/jsonrpc2"
 )
 
 var (
-	lightning  *coil.LightningRpc
-	bitcoinRpc *coil.Bitcoin
+	lightning  *lightningrpc.LightningRpc
+	bitcoinRpc *bitcoinrpc.Bitcoin
 )
 
 var (
@@ -63,9 +64,9 @@ func main() {
 	flag.Parse()
 	log.SetLevel(log.DebugLevel)
 
-	lightning = coil.NewLightningRpc(*lightningSock)
-	bitcoinRpc = coil.NewBitcoinRpc("http://rpcuser:rpcpass@localhost:18332")
-	nodeRpc := coil.NewNode(lightning, bitcoinRpc)
+	lightning = lightningrpc.NewLightningRpc(*lightningSock)
+	bitcoinRpc = bitcoinrpc.NewBitcoinRpc("http://rpcuser:rpcpass@localhost:18332")
+	nodeRpc := bitcoinrpc.NewNode(lightning, bitcoinRpc)
 
 	rpc.Register(bitcoinRpc)
 	rpc.Register(lightning)

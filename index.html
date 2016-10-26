@@ -114,7 +114,7 @@
   <div class="header">Send payment</div>
   <div class="content">
     <p>
-      <form class="ui form">
+      <form class="ui form" id="send-form">
 	<div class="field required">
 	  <label>Destination Node ID</label>
 	  <input type="text" name="destination" placeholder="">
@@ -131,10 +131,95 @@
 	</div>
 	<div class="ui error message"></div>
       </form>
+
+      <!-- TEMPLATE -->
+      <svg width="100px" height="100px" viewBox="0 0 100 100" style="display: none;">
+	<defs>
+	<g id="route-segment">
+	  <path d="M22,0L22,21" stroke-width="2" stroke-opacity="1" opacity="1" stroke="#034f84"></path>
+	  <circle cx="22" cy="22" r="5" fill="#034f84" stroke="none"></circle>
+	  <path d="M22,23L22,43" stroke-width="2" stroke-opacity="1" opacity="1" stroke="#034f84"></path>
+	</g>
+	<g id="route-segment-last">
+	  <path d="M22,0L22,21" stroke-width="2" stroke-opacity="1" opacity="1" stroke="#034f84"></path>
+	  <circle cx="22" cy="22" r="5" fill="#034f84" stroke="none"></circle>
+	</g>
+	<g id="route-segment-first">
+	  <circle cx="22" cy="22" r="5" fill="#034f84" stroke="none"></circle>
+	  <path d="M22,23L22,43" stroke-width="2" stroke-opacity="1" opacity="1" stroke="#034f84"></path>
+	</g>
+	</defs>
+      </svg>
+      <div id="route-info">
+	<table class="ui fluid celled table">
+	  <thead>
+	    <tr>
+	      <th>&nbsp;</th>
+	      <th>Hop</th>
+	      <th>Payment / Fee</th>
+	    </tr>
+	  </thead>
+	  <style>
+	    #route-info svg {
+	    border: 0px; margin: 0px; padding: 0; display: block;
+	    }
+	    .route-segment {
+	    padding: 0 !important;
+	    border: 0px;
+	    width: 43px;
+	    height: 43px;
+	    }
+	    .last .skip-last {
+	    visibility: none;
+	    }
+	    .first .skip-first {
+	    display: none;
+	    }
+	  </style>
+	  <tbody>
+            <tr>
+              <td class="route-segment">
+		<svg viewBox="0 0 43 43"><use xlink:href="#route-segment"></svg>
+	      </td>
+	      <td>03d73b199b7a94804ce48a0bd40c6f0113bd5c285e11761f7dd686f3abe54ee5b9</td>
+	      <td>0</td>
+	    </tr>
+            <tr>
+              <td style="padding: 0; border: none;">
+		<svg viewBox="0 0 43 43"><use xlink:href="#route-segment"></svg>
+	      </td>
+	      <td>03d73b199b7a94804ce48a0bd40c6f0113bd5c285e11761f7dd686f3abe54ee5b9</td>
+	      <td>0</td>
+	    </tr>
+            <tr>
+              <td style="padding: 0; border: none;">
+		<svg viewBox="0 0 43 43"><use xlink:href="#route-segment"></svg>
+	      </td>
+	      <td>03d73b199b7a94804ce48a0bd40c6f0113bd5c285e11761f7dd686f3abe54ee5b9</td>
+	      <td>0</td>
+	    </tr>
+            <tr>
+              <td class="route-segment">
+		<svg viewBox="0 0 43 43"><use xlink:href="#route-segment"></svg>
+	      </td>
+	      <td>03d73b199b7a94804ce48a0bd40c6f0113bd5c285e11761f7dd686f3abe54ee5b9</td>
+	      <td>0</td>
+	    </tr>
+            <tr>
+              <td style="padding: 0; border: none;">
+		<svg viewBox="0 0 43 43"><use xlink:href="#route-segment"></svg>
+	      </td>
+	      <td>03d73b199b7a94804ce48a0bd40c6f0113bd5c285e11761f7dd686f3abe54ee5b9</td>
+	      <td>0</td>
+	    </tr>
+	  </tbody>
+	</table>
+      </div>
     </p>
   </div>
   <div class="actions">
-    <div class="ui approve green button">Send</div>
+    <div class="ui approve green button" id="send-next-btn">Next</div>
+    <div class="ui approve green button" id="send-send-btn">Send</div>
     <div class="ui cancel button">Cancel</div>
   </div>
 </div>
@@ -163,6 +248,16 @@
   </div>
   <div class="actions">
     <div class="ui approve green button">Send</div>
+    <div class="ui cancel button">Cancel</div>
+  </div>
+</div>
+
+<div id="route-dialog" class="ui modal">
+  <div class="header"></div>
+  <div class="content">
+  </div>
+  <div class="actions">
+    <div class="ui approve green button">Connect</div>
     <div class="ui cancel button">Cancel</div>
   </div>
 </div>

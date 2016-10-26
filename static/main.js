@@ -9,6 +9,13 @@ var stateColors = {
   STATE_NORMAL_COMMITTING: "positive"
 };
 
+var info = {
+  lightning: {},
+  bitcoin: {}
+};
+
+var sendPaymentData = null;
+
 function d3jsonrpc(url, method, args, cb) {
   params = {"method": method, "params": args, "jsonrpc": "2.0", "id": 0}
   d3.xhr('/rpc/').header("Content-Type", "application/json").header("Accept", "application/json")
@@ -54,6 +61,7 @@ function updateInfo(){
     }else{
       $('#nodeinfo').removeClass("red").addClass("green");
       $("#connection-lost").hide()
+      info.lightning = r;
     }
     
     row.selectAll("td").data(data).enter().append("td");
@@ -72,6 +80,7 @@ function updateInfo(){
         data = [];
       }else{
         $('#btcinfo').removeClass("red").addClass("green");
+        info.bitcoin = r;
       }
 
   });
@@ -92,12 +101,10 @@ $('#peersTbl').on('click', '.disconnect-button', function(e) {
   });
 });
 
-var sendPaymentData = null;
-
 $(document).ready(function(){
-  window.setInterval(updatePeerTable, 10000);
+  window.setInterval(updatePeerTable, 20000);
   updatePeerTable()
-  window.setInterval(updateInfo, 10000);
+  window.setInterval(updateInfo, 25000);
   updateInfo();
 
 
@@ -105,6 +112,7 @@ $(document).ready(function(){
     $("#connect-dialog").modal("show");
   });
   $('#send-button').click(function(){
+    showSendForm();
     $('#send-dialog').modal('show');
   });
 
@@ -117,28 +125,32 @@ $(document).ready(function(){
     },
     onSuccess: function (e) {
       var form = $(e.target);
-      sendPaymentData = {
+      window.sendPaymentData = {
         destination: form.find('input[name="destination"]').val(),
         amount: parseInt(form.find('input[name="amount"]').val()),
-        paymenthash: form.find('input[name="paymenthash"]').val(),
-        route: null
+        paymenthash: form.find('input[name="paymenthash"]').val()
       };
       d3jsonrpc('/rpc/', 'LightningRpc.GetRoute', {
-        amount: sendPaymentData.amount,
-        destination: sendPaymentData.destination,
+        amount: window.sendPaymentData.amount,
+        destination: window.sendPaymentData.destination,
         risk: 1
       },function(error, data){
           if (error) {
             var errors = $(e.target).closest('.modal').find('.error').first();
             errors.show().append("<ul><li>Error computing route: " + error.message + "</li></ul>");
           } else {
-            $(e.target).closest('.modal').modal('hide');
+            //$(e.target).closest('.modal').modal('hide', function(){
+            //  $('#route-dialog').modal('show');
+            //});
+            showRoute(data.route);
           }
           console.log(data);
         });
       return false;
     }
   });
+
+  
 
   $('#receive-button').click(function(){
     $('#receive-dialog').modal('show');
@@ -170,4 +182,48 @@ $(document).ready(function(){
       }
   });
 
+  $('#send-send-btn').click(function(){
+    d3jsonrpc('/rpc/', 'LightningRpc.SendPayment', {
+      route: sendPaymentData.route,
+      paymenthash: sendPaymentData.paymenthash
+    }, function(error, data){
+         if (!error){
+           $('#send-dialog').modal('hide');
+         } else {
+           alert(error);
+           console.log(error);
+         }
+    });
+  });
 }); /* EOF onload */
+
+function showSendForm() {
+  $('#send-form, #send-next-btn').show();
+  $('#route-info, #send-send-btn').hide();  
+}
+
+function showRoute(route) {
+  sendPaymentData.route = route;
+  var hops = [
+    {id: info.lightning.id + " (source)", delay: 0, msatoshi: 0}
+  ]
+  $.each(route, function(_, e){
+    hops.push(e)
+  });
+  var body = $('#route-info tbody').empty();
+
+  $.each(hops, function(i, e){
+    var pos = ""
+    if (i == 0)
+      pos = "-first";
+    else if (i == hops.length - 1)
+      pos = '-last';
+            
+    body.append('<tr><td class="route-segment"><svg viewBox="0 0 43 43"><use xlink:href="#route-segment'+pos+'"></svg></td><td>' + e.id + '</td><td> ' +e.msatoshi+ ' </td></tr>');
+  });
+
+  $('#send-form, #send-next-btn').hide();
+  $('#route-info, #send-send-btn').show();  
+}
+
+

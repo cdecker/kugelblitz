@@ -1,6 +1,7 @@
-package coil
+package lightningrpc
 
 import (
+	"fmt"
 	"net"
 	"net/rpc/jsonrpc"
 
@@ -139,6 +140,19 @@ func (lr *LightningRpc) GetRoute(req *GetRouteRequest, res *Route) error {
 	params = append(params, req.Amount)
 	params = append(params, req.RiskFactor)
 	return lr.call("getroute", params, res)
+}
+
+type SendPaymentRequest struct {
+	Route       []RouteHop `json:"route"`
+	PaymentHash string     `json:"paymenthash"`
+}
+
+func (lr *LightningRpc) SendPayment(req *SendPaymentRequest, res *string) error {
+	fmt.Printf("%#v", req)
+	var params []interface{}
+	params = append(params, req.Route)
+	params = append(params, req.PaymentHash)
+	return lr.call("sendpay", params, res)
 }
 
 type ConnectRequest struct {

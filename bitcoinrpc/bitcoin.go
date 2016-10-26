@@ -1,4 +1,4 @@
-package coil
+package bitcoinrpc
 
 import (
 	"encoding/json"
@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/cdecker/kugelblitz/lightningrpc"
 )
 
 type Bitcoin struct {
@@ -18,7 +19,7 @@ type Bitcoin struct {
 }
 
 type Node struct {
-	lightningRpc *LightningRpc
+	lightningRpc *lightningrpc.LightningRpc
 	bitcoinRpc   *Bitcoin
 }
 
@@ -124,7 +125,7 @@ func (b *Bitcoin) call(method string, params []interface{}, res interface{}) err
 	}
 }
 
-func (b *Bitcoin) GetInfo(_ *Empty, response *GetBInfoResponse) error {
+func (b *Bitcoin) GetInfo(_ *lightningrpc.Empty, response *GetBInfoResponse) error {
 	return b.call("getinfo", nil, response)
 }
 
@@ -145,17 +146,17 @@ func (bc *Bitcoin) exec(method string, args []string) (string, error) {
 	return strings.TrimSpace(string(out[:])), nil
 }
 
-func NewNode(lrpc *LightningRpc, brpc *Bitcoin) *Node {
+func NewNode(lrpc *lightningrpc.LightningRpc, brpc *Bitcoin) *Node {
 	return &Node{
 		lightningRpc: lrpc,
 		bitcoinRpc:   brpc,
 	}
 }
 
-func (n *Node) ConnectPeer(req *ConnectPeerRequest, res *Empty) error {
+func (n *Node) ConnectPeer(req *ConnectPeerRequest, res *lightningrpc.Empty) error {
 	log.Debugf("Connecting to %s:%d", req.Host, req.Port)
-	var addrResp NewAddressResponse
-	err := n.lightningRpc.NewAddress(&Empty{}, &addrResp)
+	var addrResp lightningrpc.NewAddressResponse
+	err := n.lightningRpc.NewAddress(&lightningrpc.Empty{}, &addrResp)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -180,16 +181,16 @@ func (n *Node) ConnectPeer(req *ConnectPeerRequest, res *Empty) error {
 
 	// Finally we need to tell lightningd to connect to that node
 	// with the funds provided
-	connReq := &ConnectRequest{
+	connReq := &lightningrpc.ConnectRequest{
 		Host:         req.Host,
 		Port:         req.Port,
 		FundingTxHex: rawResp.RawTransaction,
 	}
 	if req.Async {
 		log.Debugf("Calling lightning.connect with %#v", connReq)
-		go n.lightningRpc.Connect(connReq, &ConnectResponse{})
+		go n.lightningRpc.Connect(connReq, &lightningrpc.ConnectResponse{})
 	} else {
-		return n.lightningRpc.Connect(connReq, &ConnectResponse{})
+		return n.lightningRpc.Connect(connReq, &lightningrpc.ConnectResponse{})
 	}
 
 	return nil
