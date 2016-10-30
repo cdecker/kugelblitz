@@ -147,7 +147,11 @@ type SendPaymentRequest struct {
 	PaymentHash string     `json:"paymenthash"`
 }
 
-func (lr *LightningRpc) SendPayment(req *SendPaymentRequest, res *string) error {
+type SendPaymentResponse struct {
+	PaymentKey string `json:"preimage"`
+}
+
+func (lr *LightningRpc) SendPayment(req *SendPaymentRequest, res *SendPaymentResponse) error {
 	fmt.Printf("%#v", req)
 	var params []interface{}
 	params = append(params, req.Route)

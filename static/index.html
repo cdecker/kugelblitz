@@ -76,7 +76,9 @@
   <div class="ui grid">
     <div class="sixteen wide column">
       <div class="ui buttons fluid">
+	<!--
 	<button id="receive-button" class="ui blue button" style="border-right: 1px white solid;"><i class="arrow circle down icon"></i> Receive payment</button>
+	-->
 	<button id="send-button" class="ui positive button" style="border-left: 1px white solid;"><i class="arrow circle up icon"></i>Send payment</button>
       </div>
     </div>
@@ -113,6 +115,9 @@
 <div id="send-dialog" class="ui modal">
   <div class="header">Send payment</div>
   <div class="content">
+    <div id="send-dimmer" class="ui dimmer">
+    <div class="ui indeterminate text loader">Sending Payment</div>
+  </div>
     <p>
       <form class="ui form" id="send-form">
 	<div class="field required">
@@ -177,49 +182,13 @@
 	    }
 	  </style>
 	  <tbody>
-            <tr>
-              <td class="route-segment">
-		<svg viewBox="0 0 43 43"><use xlink:href="#route-segment"></svg>
-	      </td>
-	      <td>03d73b199b7a94804ce48a0bd40c6f0113bd5c285e11761f7dd686f3abe54ee5b9</td>
-	      <td>0</td>
-	    </tr>
-            <tr>
-              <td style="padding: 0; border: none;">
-		<svg viewBox="0 0 43 43"><use xlink:href="#route-segment"></svg>
-	      </td>
-	      <td>03d73b199b7a94804ce48a0bd40c6f0113bd5c285e11761f7dd686f3abe54ee5b9</td>
-	      <td>0</td>
-	    </tr>
-            <tr>
-              <td style="padding: 0; border: none;">
-		<svg viewBox="0 0 43 43"><use xlink:href="#route-segment"></svg>
-	      </td>
-	      <td>03d73b199b7a94804ce48a0bd40c6f0113bd5c285e11761f7dd686f3abe54ee5b9</td>
-	      <td>0</td>
-	    </tr>
-            <tr>
-              <td class="route-segment">
-		<svg viewBox="0 0 43 43"><use xlink:href="#route-segment"></svg>
-	      </td>
-	      <td>03d73b199b7a94804ce48a0bd40c6f0113bd5c285e11761f7dd686f3abe54ee5b9</td>
-	      <td>0</td>
-	    </tr>
-            <tr>
-              <td style="padding: 0; border: none;">
-		<svg viewBox="0 0 43 43"><use xlink:href="#route-segment"></svg>
-	      </td>
-	      <td>03d73b199b7a94804ce48a0bd40c6f0113bd5c285e11761f7dd686f3abe54ee5b9</td>
-	      <td>0</td>
-	    </tr>
 	  </tbody>
 	</table>
       </div>
     </p>
   </div>
   <div class="actions">
-    <div class="ui approve green button" id="send-next-btn">Next</div>
-    <div class="ui approve green button" id="send-send-btn">Send</div>
+    <div class="ui approve green button">Send</div>
     <div class="ui cancel button">Cancel</div>
   </div>
 </div>

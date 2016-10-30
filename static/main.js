@@ -98,7 +98,9 @@ $('#peersTbl').on('click', '.disconnect-button', function(e) {
   console.log("Disconnecting", peerid)
   d3jsonrpc('/rpc/', 'LightningRpc.Close', {"peerid": peerid}, function(error, data){
     console.log("Disconnected", data, error);
+    updateInfo();
   });
+  $(e.target).addClass('disabled');
 });
 
 $(document).ready(function(){
@@ -112,7 +114,7 @@ $(document).ready(function(){
     $("#connect-dialog").modal("show");
   });
   $('#send-button').click(function(){
-    showSendForm();
+    $('#route-info').hide();
     $('#send-dialog').modal('show');
   });
 
@@ -128,29 +130,51 @@ $(document).ready(function(){
       window.sendPaymentData = {
         destination: form.find('input[name="destination"]').val(),
         amount: parseInt(form.find('input[name="amount"]').val()),
-        paymenthash: form.find('input[name="paymenthash"]').val()
+        paymenthash: form.find('input[name="paymenthash"]').val(),
+        route: window.sendPaymentData.route
       };
-      d3jsonrpc('/rpc/', 'LightningRpc.GetRoute', {
-        amount: window.sendPaymentData.amount,
-        destination: window.sendPaymentData.destination,
-        risk: 1
-      },function(error, data){
-          if (error) {
+    console.log(window.sendPaymentData)
+    $('#send-dimmer').addClass('active');
+    d3jsonrpc('/rpc/', 'LightningRpc.SendPayment', {
+      route: sendPaymentData.route,
+      paymenthash: sendPaymentData.paymenthash
+    }, function(error, data){
+          $('#send-dimmer').removeClass('active');
+         if (!error){
+           $('#send-dialog').modal('hide');
+         } else {
             var errors = $(e.target).closest('.modal').find('.error').first();
-            errors.show().append("<ul><li>Error computing route: " + error.message + "</li></ul>");
-          } else {
-            //$(e.target).closest('.modal').modal('hide', function(){
-            //  $('#route-dialog').modal('show');
-            //});
-            showRoute(data.route);
-          }
-          console.log(data);
-        });
+            errors.empty().append("<ul><li>Error sending payment: " + error.message + "</li></ul>").show();
+           console.log(error);
+         }
+       });
       return false;
     }
   });
 
-  
+  $('#send-form input').on('blur', function(e) {
+    var form = $(e.target).closest('form');
+    window.sendPaymentData = {
+      destination: form.find('input[name="destination"]').val(),
+      amount: parseInt(form.find('input[name="amount"]').val()),
+      paymenthash: form.find('input[name="paymenthash"]').val()
+    };
+    d3jsonrpc('/rpc/', 'LightningRpc.GetRoute', {
+      amount: window.sendPaymentData.amount,
+      destination: window.sendPaymentData.destination,
+      risk: 1
+    },function(error, data){
+        
+        if (error) {
+          var errors = $(e.target).closest('.modal').find('.error').first();
+          errors.empty().append("<ul><li>Error computing route: " + error.message + "</li></ul>").show();
+        } else {
+          window.sendPaymentData.route = data.route
+          showRoute(data.route);
+        }
+      });
+    return false;
+  });
 
   $('#receive-button').click(function(){
     $('#receive-dialog').modal('show');
@@ -183,32 +207,17 @@ $(document).ready(function(){
   });
 
   $('#send-send-btn').click(function(){
-    d3jsonrpc('/rpc/', 'LightningRpc.SendPayment', {
-      route: sendPaymentData.route,
-      paymenthash: sendPaymentData.paymenthash
-    }, function(error, data){
-         if (!error){
-           $('#send-dialog').modal('hide');
-         } else {
-           alert(error);
-           console.log(error);
-         }
-    });
   });
 }); /* EOF onload */
 
-function showSendForm() {
-  $('#send-form, #send-next-btn').show();
-  $('#route-info, #send-send-btn').hide();  
-}
-
 function showRoute(route) {
-  sendPaymentData.route = route;
+  window.sendPaymentData.route = route;
   var hops = [
     {id: info.lightning.id + " (source)", delay: 0, msatoshi: 0}
   ]
   $.each(route, function(_, e){
-    hops.push(e)
+    hops.push(e);
+    //e.delay *= 6;
   });
   var body = $('#route-info tbody').empty();
 
@@ -222,8 +231,8 @@ function showRoute(route) {
     body.append('<tr><td class="route-segment"><svg viewBox="0 0 43 43"><use xlink:href="#route-segment'+pos+'"></svg></td><td>' + e.id + '</td><td> ' +e.msatoshi+ ' </td></tr>');
   });
 
-  $('#send-form, #send-next-btn').hide();
-  $('#route-info, #send-send-btn').show();  
+  //$('#route-info').transition('slide down');
+  $('#route-info').show();
 }
 
 

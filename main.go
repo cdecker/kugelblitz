@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/rpc"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/cdecker/kugelblitz/bitcoinrpc"
 	"github.com/cdecker/kugelblitz/lightningrpc"
+	"github.com/cdecker/kugelblitz/static"
 	"github.com/powerman/rpc-codec/jsonrpc2"
 )
 
@@ -21,7 +21,7 @@ var (
 )
 
 var (
-	lightningSock = flag.String("lightning-socket", "/tmp/lightning2/lightning-rpc",
+	lightningSock = flag.String("lightning-socket", "/tmp/lightning1/lightning-rpc",
 		"Location of the lightning unix domain socket.")
 	bitcoinRpcLoc = flag.String("bitcoin-rpc", "localhost:18332",
 		"Location where bitcoind is listening for RPC calls.")
@@ -31,7 +31,7 @@ var (
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	index, err := ioutil.ReadFile("index.html")
+	index, err := static.Asset("index.html")
 	if err != nil {
 		http.Error(w, fmt.Sprintf("%v", err), 500)
 	}
@@ -39,7 +39,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func staticHandler(w http.ResponseWriter, r *http.Request) {
-	c, err := ioutil.ReadFile("static/" + r.RequestURI[8:])
+	c, err := static.Asset(r.RequestURI[8:])
 	if err != nil {
 		log.Errorf("Error reading static resource: %v", err)
 		http.Error(w, fmt.Sprintf("%v", err), 404)
