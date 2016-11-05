@@ -21,7 +21,7 @@ var (
 )
 
 var (
-	lightningSock = flag.String("lightning-socket", "/tmp/lightning1/lightning-rpc",
+	lightningSock = flag.String("lightning-socket", "/home/cdecker/.lightning/lightning-rpc",
 		"Location of the lightning unix domain socket.")
 	bitcoinRpcLoc = flag.String("bitcoin-rpc", "localhost:18332",
 		"Location where bitcoind is listening for RPC calls.")
