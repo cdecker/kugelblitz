@@ -27,7 +27,7 @@ var (
 		"Location where bitcoind is listening for RPC calls.")
 	networkParams = flag.String("network", "testnet",
 		"Network to use (mainnet, testnet or regtest).")
-	port = flag.Int("port", 8000, "Port to listen on for HTTP clients.")
+	port = flag.Int("port", 19735, "Port to listen on for HTTP clients.")
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -75,5 +75,5 @@ func main() {
 	http.HandleFunc("/", handler)
 	http.Handle("/rpc/", jsonrpc2.HTTPHandler(nil))
 	http.HandleFunc("/static/", staticHandler)
-	http.ListenAndServe(":8000", nil)
+	http.ListenAndServe(fmt.Sprintf(":%d", *port), nil)
 }

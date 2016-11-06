@@ -54,7 +54,7 @@ function updateInfo(){
   d3jsonrpc("/rpc/", "LightningRpc.GetInfo", {}, function(error, r){
     var row = d3.select("#nodeinfo tbody tr")
     var data = [r.id, r.version, r.port, r.testnet];      
-    if(r.error != null){
+    if(error != null){
       $('#nodeinfo').removeClass('green').addClass("red");
       $("#connection-lost").show()
       data = [];
@@ -75,11 +75,23 @@ function updateInfo(){
             row.selectAll("td").data(data).enter().append("td");
       row.selectAll("td").data(data).exit().remove();
       row.selectAll("td").text(function(e){return e;});
-      if(r.error != null){
-        $('#btcinfo').removeClass('green').addClass("red");
+      if(error != null){
+        $('#btcinfo').removeClass('green').addClass("red").addClass("attached");
+        $("#btc-no-funds-error").hide();
+        $("#btc-error").html(error).show();
         data = [];
+      }else if(r.balance == 0){
+        d3jsonrpc("/rpc/", "Node.GetFundingAddr", {}, function(error, data){
+console.log(error, data.addr);
+          $("#btc-fund-addr").html(data.addr);
+        });
+        $("#btc-no-funds-error").show();
+        $('#btcinfo').removeClass('green').addClass("red").addClass("attached");
+        $("#btc-error").html(error).hide();
       }else{
-        $('#btcinfo').removeClass("red").addClass("green");
+        $('#btcinfo').removeClass("red").removeClass("attached").addClass("green") 
+        $("#btc-no-funds-error").hide();
+        $("#btc-error").html(error).hide();
         info.bitcoin = r;
       }
 
@@ -104,9 +116,9 @@ $('#peersTbl').on('click', '.disconnect-button', function(e) {
 });
 
 $(document).ready(function(){
-  window.setInterval(updatePeerTable, 20000);
+  window.setInterval(updatePeerTable, 2000);
   updatePeerTable()
-  window.setInterval(updateInfo, 25000);
+  window.setInterval(updateInfo, 2500);
   updateInfo();
 
 

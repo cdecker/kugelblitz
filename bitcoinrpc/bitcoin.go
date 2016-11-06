@@ -21,6 +21,7 @@ type Bitcoin struct {
 type Node struct {
 	lightningRpc *lightningrpc.LightningRpc
 	bitcoinRpc   *Bitcoin
+	fundingAddr  string
 }
 
 type GetBInfoResponse struct {
@@ -65,6 +66,10 @@ type GetRawTransactionResponse struct {
 	RawTransaction string `json:"rawtx"`
 }
 
+type Address struct {
+	Addr string `json:"addr"`
+}
+
 func (c *HttpConn) Read(p []byte) (n int, err error)  { return c.in.Read(p) }
 func (c *HttpConn) Write(d []byte) (n int, err error) { return c.out.Write(d) }
 func (c *HttpConn) Close() error                      { return nil }
@@ -82,6 +87,11 @@ func (b *Bitcoin) GetRawTransaction(req *TxReference, res *GetRawTransactionResp
 	params = append(params, req.TransactionId)
 
 	return b.call("getrawtransaction", params, &res.RawTransaction)
+}
+
+func (b *Bitcoin) GetNewAddress(req *lightningrpc.Empty, res *string) error {
+	var params []interface{}
+	return b.call("getnewaddress", params, res)
 }
 
 func (b *Bitcoin) call(method string, params []interface{}, res interface{}) error {
@@ -194,4 +204,17 @@ func (n *Node) ConnectPeer(req *ConnectPeerRequest, res *lightningrpc.Empty) err
 	}
 
 	return nil
+}
+
+type FundingAddr struct {
+	Addr string `json:"addr"`
+}
+
+func (n *Node) GetFundingAddr(req *lightningrpc.Empty, res *Address) error {
+	var err error
+	if n.fundingAddr == "" {
+		err = n.bitcoinRpc.GetNewAddress(req, &n.fundingAddr)
+	}
+	res.Addr = n.fundingAddr
+	return err
 }

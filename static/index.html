@@ -56,7 +56,7 @@
 	<i class="tag bitcoin"></i>
 	Bitcoin Node
       </h4>
-    <table id="btcinfo" class="ui celled table">
+    <table id="btcinfo" class="ui celled table attached">
       <thead>
 	<tr>
 	  <th>Version</th>
@@ -70,6 +70,18 @@
 	</tr>
       </tbody>
     </table>
+    <div class="ui bottom attached error message" id="btc-no-funds-error">
+      <i class="icon help"></i>
+      Your Bitcoin Node does not have any funds available.
+      You will not be able to open new channels.
+      You can fund the node by sending a Bitcoin transaction to <em id="btc-fund-addr"></em>, e.g., from a <a href="http://tpfaucet.appspot.com/">faucet</a>.
+    </div>
+    <div class="ui bottom attached error message" id="btc-error" style="display: none;">
+      <i class="icon help"></i>
+    </div>
+
+
+
       
     </div>
   </div>
