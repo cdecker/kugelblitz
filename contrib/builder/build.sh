@@ -2,5 +2,5 @@
 cd /build/lightning
 make clean
 make
-make check
+make -j3 check
 make check-source

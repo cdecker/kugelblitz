@@ -8,6 +8,7 @@ RUN apt-get update -qq && \
 	build-essential \
 	autoconf \
 	automake \
+	eatmydata \
 	git \
 	net-tools \
 	libtool \
