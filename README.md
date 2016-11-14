@@ -8,7 +8,7 @@ If you have Docker installed then Kugelblitz is just one `docker run` away:
 sudo docker run -p 19735:19735 cdecker/kugelblitz:latest
 ```
 
-This will download the docker image, start `bitcoind`, `lightningd` and the kugelblitz UI bound to port 19735. Opening http://localhost:19735 should show you the interface.
+This will download the docker image, start `bitcoind`, `lightningd` and the kugelblitz UI bound to port 19735. Opening [http://localhost:19735](http://localhost:19735) should show you the interface.
 
 Notice that the `bitcoind` instance is synchronizing with testnet, which may take a few hours. In order not to have to do that all the time (and not losing your hard earned testcoins) we recommend that you use this instead:
 
