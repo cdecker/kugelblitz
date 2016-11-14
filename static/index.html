@@ -11,7 +11,9 @@
   <title>Kugelblitz</title>
   <link rel="stylesheet" type="text/css" href="/static/semantic.css">
   <link rel="stylesheet" type="text/css" href="/static/grid.css">
+  <link rel="stylesheet" type="text/css" href="http://fontawesome.io/assets/font-awesome/css/font-awesome.css">
   <link rel="shortcut icon" type="image/png" href="/static/favicon.png"/>
+  <link rel="stylesheet" type="text/css" href="/static/custom.css">
 </head>
 <body>
 
@@ -19,72 +21,97 @@
   <div class="ui inverted menu">
     <div class="header item">Kugelblitz</div>
   </div>
-
+  
   <div class="ui grid">
-    <div class="sixteen wide column">
-      <h2 class="ui dividing header">Node Information</h2>
-      <div id="connection-lost" class="ui negative message hidden">
-	<div class="header">
-	  Connection to Lightning Node lost
+    <div class="five wide column center aligned" id="btc-state">
+      <h3>Bitcoin status</h3>
+	<span id="bitcoin-status-icon" class="fa-stack fa-5x yellow">
+	  <i class="fa fa-circle fa-stack-2x"></i>
+	  <i class="fa fa-btc fa-stack-1x fa-inverse"></i>
+	</span>
+      <script>
+      </script>
+
+      <div class="ui popup sixteen wide transition hidden">
+	<div class="grid">
+	<table id="btcinfo" class="ui celled table attached" style="width: 900px;">
+	  <thead>
+	    <tr>
+	      <th>Version</th>
+	      <th>Blocks</th>
+	      <th>Connections</th>
+	      <th>Balance</th>
+	    </tr>
+	  </thead>
+	  <tbody>
+	    <tr>
+	    </tr>
+	  </tbody>
+	</table>
+	<div class="ui bottom attached error message" id="btc-no-funds-error">
+	  <i class="icon help"></i>
+	  Your Bitcoin Node does not have any funds available.
+	  You will not be able to open new channels.
+	  You can fund the node by sending a Bitcoin transaction to <em id="btc-fund-addr"></em>, e.g., from a <a href="http://tpfaucet.appspot.com/">faucet</a>.
 	</div>
-	<p>
-	  We seem to have lost the connection to the lightning daemon,
-	  please wait or restart the node.
-	</p>
+	<div class="ui bottom attached error message" id="btc-error" style="display: none;">
+	  <i class="icon help"></i>
+	</div>
       </div>
-
-      <h4 class="ui horizontal divider header">
-	<i class="tag lightning"></i>
-	Lightning Node
-      </h4>
-      <table id="nodeinfo" class="ui celled table">
-	<thead>
-	  <tr>
-	    <th>Node ID</th>
-	    <th>Version</th>
-	    <th>Port</th>
-	    <th>Testnet</th>
-	  </tr>
-	</thead>
-	<tbody>
-	  <tr>
-	  </tr>
-	</tbody>
-      </table>
       
-      <h4 class="ui horizontal divider header">
-	<i class="tag bitcoin"></i>
-	Bitcoin Node
-      </h4>
-    <table id="btcinfo" class="ui celled table attached">
-      <thead>
-	<tr>
-	  <th>Version</th>
-	  <th>Blocks</th>
-	  <th>Connections</th>
-	  <th>Balance</th>
-	</tr>
-      </thead>
-      <tbody>
-	<tr>
-	</tr>
-      </tbody>
-    </table>
-    <div class="ui bottom attached error message" id="btc-no-funds-error">
-      <i class="icon help"></i>
-      Your Bitcoin Node does not have any funds available.
-      You will not be able to open new channels.
-      You can fund the node by sending a Bitcoin transaction to <em id="btc-fund-addr"></em>, e.g., from a <a href="http://tpfaucet.appspot.com/">faucet</a>.
+	</div>
     </div>
-    <div class="ui bottom attached error message" id="btc-error" style="display: none;">
-      <i class="icon help"></i>
+    <div class="six wide column center aligned" id="kb-state">
+      <h3>Kugelblitz status</h3>
+      <span class="fa-stack fa-5x yellow">
+	<i class="fa fa-circle fa-stack-2x"></i>
+	<i class="fa fa-gears fa-stack-1x fa-inverse"></i>
+      </span>
+      <div class="ui popup">
+	<div id="connection-lost" class="ui negative message hidden">
+	  <div class="header">
+	    Connection to Lightning Node lost
+	  </div>
+	  <p>
+	    We seem to have lost the connection to the lightning daemon,
+	    please wait or restart the node.
+	  </p>
+	</div>
+      </div>
     </div>
+    <div class="five wide column center aligned" id="lightning-state">
+      <h3>Lightning status</h3>
+      <span class="fa-stack fa-5x yellow">
+	<i class="fa fa-circle fa-stack-2x"></i>
+	<i class="fa fa-flash fa-stack-1x fa-inverse"></i>
+      </span>
+      <div class="ui popup left aligned">
+	<div class="ui message">
+	  <i class="icon help"></i>
+	  We are currently checking whether <em>lightningd</em> is up and running, hold tight.
+	</div>
 
-
-
-      
+	<div class="ui relaxed divided list" id="nodeinfolist">
+	</div>
+	
+	<table id="nodeinfo" class="ui celled table" style="width: 1000px; display: none;">
+	  <thead>
+	    <tr>
+	      <th>Node ID</th>
+	      <th>Version</th>
+	      <th>Port</th>
+	      <th>Testnet</th>
+	    </tr>
+	  </thead>
+	  <tbody>
+	    <tr>
+	    </tr>
+	  </tbody>
+	</table>
+      </div>
     </div>
   </div>
+
   <div class="ui grid">
     <div class="sixteen wide column">
       <div class="ui buttons fluid">

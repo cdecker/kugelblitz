@@ -4,6 +4,7 @@ var stateColors = {
   STATE_CLOSE_ONCHAIN_OUR_UNILATERAL: "negative",
   STATE_OPEN_WAITING_OURANCHOR: "warning",
   STATE_OPEN_WAITING_THEIRANCHOR: "warning",
+  STATE_OPEN_WAIT_ANCHORDEPTH_AND_THEIRCOMPLETE: "warning",
   STATE_OPEN_WAITING_OURANCHOR_THEYCOMPLETED: "warning",
   STATE_ERR_INFORMATION_LEAK: "negative",
   STATE_NORMAL_COMMITTING: "positive"
@@ -52,8 +53,24 @@ function updatePeerTable() {
 
 function updateInfo(){
   d3jsonrpc("/rpc/", "LightningRpc.GetInfo", {}, function(error, r){
+    if (error){
+      setAllState('red', "Connection to <em>kugelblitz</em> lost, can't check other daemons.")
+      d3.select("#nodeinfolist").selectAll(".item").remove();
+      //setLightningState('red', "Error retrieving <em>lightningd</em> info");
+      console.log("Error retrieving lightningd info", error);
+      return;
+    }
+    setLightningState('green', "Lightningd is up and running.");
+
+    var data = [r.id, r.version, r.port, r.testnet];
+    var headers = ["Node ID", "Version", "Port", "Testnet"]
+    
+    var items = d3.select("#nodeinfolist").selectAll(".item");
+    items.data(data).enter().append("div").classed('item', true);
+    items.data(data).exit().remove();
+    items.html(function(e, t){return "<div class='header'>"+headers[t]+"</div>" + e});
+
     var row = d3.select("#nodeinfo tbody tr")
-    var data = [r.id, r.version, r.port, r.testnet];      
     if(error != null){
       $('#nodeinfo').removeClass('green').addClass("red");
       $("#connection-lost").show()
@@ -69,32 +86,36 @@ function updateInfo(){
     row.selectAll("td").text(function(e){return e;});
   });
 
-  d3jsonrpc("/rpc/", "Bitcoin.GetInfo", {}, function(error, r){
-      var row = d3.select("#btcinfo tbody tr")
-      var data = [r.version, r.blocks, r.connections, r.balance];
-            row.selectAll("td").data(data).enter().append("td");
-      row.selectAll("td").data(data).exit().remove();
-      row.selectAll("td").text(function(e){return e;});
-      if(error != null){
-        $('#btcinfo').removeClass('green').addClass("red").addClass("attached");
-        $("#btc-no-funds-error").hide();
-        $("#btc-error").html(error).show();
-        data = [];
-      }else if(r.balance == 0){
-        d3jsonrpc("/rpc/", "Node.GetFundingAddr", {}, function(error, data){
-console.log(error, data.addr);
-          $("#btc-fund-addr").html(data.addr);
-        });
-        $("#btc-no-funds-error").show();
-        $('#btcinfo').removeClass('green').addClass("red").addClass("attached");
-        $("#btc-error").html(error).hide();
-      }else{
-        $('#btcinfo').removeClass("red").removeClass("attached").addClass("green") 
-        $("#btc-no-funds-error").hide();
-        $("#btc-error").html(error).hide();
-        info.bitcoin = r;
-      }
-
+  d3jsonrpc("/rpc/", "BitcoinRpc.GetInfo", {}, function(error, r){
+    if (error){
+      console.log("Error retrieving bitcoind info", error);
+      return;
+    }
+    var row = d3.select("#btcinfo tbody tr")
+    var data = [r.version, r.blocks, r.connections, r.balance];
+    row.selectAll("td").data(data).enter().append("td");
+    row.selectAll("td").data(data).exit().remove();
+    row.selectAll("td").text(function(e){return e;});
+    if(error != null){
+      $('#btcinfo').removeClass('green').addClass("red").addClass("attached");
+      $("#btc-no-funds-error").hide();
+      $("#btc-error").html(error).show();
+      data = [];
+    }else if(r.balance == 0){
+      d3jsonrpc("/rpc/", "Node.GetFundingAddr", {}, function(error, data){
+        console.log(error, data.addr);
+        $("#btc-fund-addr").html(data.addr);
+      });
+      $("#btc-no-funds-error").show();
+      $('#btcinfo').removeClass('green').addClass("red").addClass("attached");
+      $("#btc-error").html(error).hide();
+    }else{
+      $('#btcinfo').removeClass("red").removeClass("attached").addClass("green") 
+      $("#btc-no-funds-error").hide();
+      $("#btc-error").html(error).hide();
+      info.bitcoin = r;
+    }
+    
   });
 }
 
@@ -120,7 +141,6 @@ $(document).ready(function(){
   updatePeerTable()
   window.setInterval(updateInfo, 2500);
   updateInfo();
-
 
   $('.open-connect-modal').click(function(){
     $("#connect-dialog").modal("show");
@@ -218,8 +238,17 @@ $(document).ready(function(){
       }
   });
 
-  $('#send-send-btn').click(function(){
+  $('.fa-5x').popup({
+    inline     : true,
+    hoverable  : true,
+    position   : 'bottom center',
+    delay: {
+      show: 100,
+      hide: 250
+    },
+    hoverable: true
   });
+  installHandlers();
 }); /* EOF onload */
 
 function showRoute(route) {
@@ -247,4 +276,28 @@ function showRoute(route) {
   $('#route-info').show();
 }
 
+function installHandlers() {
+}
 
+function setAllState(color, status) {
+  setBitcoinState(color, status);
+  setKugelblitzState(color, status);
+  setLightningState(color, status);
+}
+
+function setBitcoinState(color, status) {
+  return setDaemonState($('#btc-state'), color, status);
+}
+
+function setLightningState(color, status) {
+  return setDaemonState($('#lightning-state'), color, status);
+}
+
+function setKugelblitzState(color, status) {
+  return setDaemonState($('#kb-state'), color, status);
+}
+
+function setDaemonState(element, color, status) {
+  element.find('span.fa-stack').removeClass('yellow red green').addClass(color);
+  element.find('.popup .message').html(status);
+}
