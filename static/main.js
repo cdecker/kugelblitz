@@ -59,7 +59,7 @@ function transportFailure(terror) {
       d3.select("#nodeinfolist").selectAll(".item").remove();
 }
 
-function updateInfo(){
+function updateLightningInfo() {
   d3jsonrpc("/rpc/", "LightningRpc.GetInfo", {}, function(terror, error, r){
     var headers = ["Node ID", "Version", "Port", "Testnet"]
     var items = d3.select("#nodeinfolist").selectAll(".item");
@@ -78,12 +78,15 @@ function updateInfo(){
       setLightningState('green', "Lightningd is up and running.");
     }
   });
+}
 
+function updateBitcoinInfo() {
   d3jsonrpc("/rpc/", "BitcoinRpc.GetInfo", {}, function(terror, error, r){
     if (error){
       console.log("Error retrieving bitcoind info", error);
+      setBitcoinState('red', "Could not contact <em>bitcoind</em>, maybe we just need to wait?")
       return;
-    }
+    }else{
     var row = d3.select("#btcinfo tbody tr")
     var data = [r.version, r.blocks, r.connections, r.balance];
     row.selectAll("td").data(data).enter().append("td");
@@ -102,14 +105,36 @@ function updateInfo(){
       $("#btc-no-funds-error").show();
       $('#btcinfo').removeClass('green').addClass("red").addClass("attached");
       $("#btc-error").html(error).hide();
+      setBitcoinState('yellow', "Your bitcoin node does not have any funds available. We can't create channels without funds.")
     }else{
       $('#btcinfo').removeClass("red").removeClass("attached").addClass("green") 
       $("#btc-no-funds-error").hide();
       $("#btc-error").html(error).hide();
       info.bitcoin = r;
+      setBitcoinState('green', "Your bitcoin node is up and running.")
     }
-    
+    }
   });
+}
+
+function updateKugelblitzInfo() {
+  console.log("Updating kugelblitz")
+  d3jsonrpc("/rpc/", "Node.GetInfo", {}, function(terror, error, r){
+    console.log(terror, error, r);
+    if (error || terror){
+      console.log("Error retrieving kugelblitz info", error);
+      setKugelblitzState('red', "Could not retrieve information from Kugelblitz: " + error);
+      return;
+    } else {
+      setKugelblitzState('green', "Kugelblitz is up and running.")
+    }
+  });
+}
+
+function updateInfo(){
+  updateLightningInfo();
+  updateBitcoinInfo();
+  updateKugelblitzInfo();
 }
 
 function serializeFormData(form) {

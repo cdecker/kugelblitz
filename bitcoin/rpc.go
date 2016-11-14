@@ -223,3 +223,10 @@ func (n *Node) GetFundingAddr(req *lightningrpc.Empty, res *Address) error {
 	res.Addr = n.fundingAddr
 	return err
 }
+
+type KugelblitzInfo struct {
+}
+
+func (n *Node) GetInfo(req *lightningrpc.Empty, res *KugelblitzInfo) error {
+	return nil
+}
