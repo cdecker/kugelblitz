@@ -1,6 +1,7 @@
 package bitcoin
 
 type BitcoinDOpts struct {
+	Datadir string
 }
 
 type BitcoinD interface {
@@ -12,14 +13,16 @@ type bitcoinD struct {
 	opts BitcoinDOpts
 }
 
-func NewBitcoinD(opts BitcoinDOpts) {
-	return &bitcoinD{
+func NewBitcoinD(opts BitcoinDOpts) BitcoinD {
+	return bitcoinD{
 		opts: opts,
 	}
 }
 
-func (b *bitcoinD) Start() error {
+func (b bitcoinD) Start() error {
+	return nil
 }
 
-func (b *bitcoinD) Stop() error {
+func (b bitcoinD) Stop() error {
+	return nil
 }

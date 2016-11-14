@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/rpc/jsonrpc"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/powerman/rpc-codec/jsonrpc2"
 )
 
@@ -42,6 +43,8 @@ type Peer struct {
 }
 
 func (lr *LightningRpc) call(method string, req interface{}, res interface{}) error {
+	log.Debugf("Calling lightning.%s with args %v", method, req)
+
 	clientTCP, err := jsonrpc2.Dial("unix", lr.socketPath)
 	if err != nil {
 		return err
@@ -59,6 +62,10 @@ func (lr *LightningRpc) NewAddress(_ *Empty, res *NewAddressResponse) error {
 	defer client.Close()
 	err = client.Call("newaddr", Empty{}, res)
 	return err
+}
+
+func (lr *LightningRpc) IsAlive() bool {
+	return lr.GetInfo(&Empty{}, &GetInfoResponse{}) == nil
 }
 
 func (lr *LightningRpc) GetInfo(req *Empty, res *GetInfoResponse) error {
