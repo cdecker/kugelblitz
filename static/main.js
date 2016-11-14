@@ -24,21 +24,24 @@ function d3jsonrpc(url, method, args, cb) {
     function (error, data) {
       if (!error){
         data = JSON.parse(data.responseText);
-        cb(data.error, data.result)
+        cb(null, data.error, data.result)
       } else {
-        cb(error, null)
+        cb(error, null, null)
       }
     }
   );
 }
 
 function updatePeerTable() {
-  d3jsonrpc('/rpc/', "LightningRpc.GetPeers", {}, function(error, data){
+  d3jsonrpc('/rpc/', "LightningRpc.GetPeers", {}, function(terror, error, data){
+    var tbody = d3.select('#peersTbl > tbody');
+    var rows = tbody.selectAll("tr");
     if (error) {
-      console.log(error);
+      rows.remove();
+    } else if(terror) {
+      transportFailure(terror);
     } else {
-      var tbody = d3.select('#peersTbl > tbody');
-      var rows = tbody.selectAll("tr").data(data.peers);
+      rows = rows.data(data.peers);
       rows.enter().append("tr");
       rows.exit().remove();
       rows.html(function(d) {
@@ -51,42 +54,32 @@ function updatePeerTable() {
   });
 }
 
-function updateInfo(){
-  d3jsonrpc("/rpc/", "LightningRpc.GetInfo", {}, function(error, r){
-    if (error){
+function transportFailure(terror) {
       setAllState('red', "Connection to <em>kugelblitz</em> lost, can't check other daemons.")
       d3.select("#nodeinfolist").selectAll(".item").remove();
-      //setLightningState('red', "Error retrieving <em>lightningd</em> info");
-      console.log("Error retrieving lightningd info", error);
-      return;
-    }
-    setLightningState('green', "Lightningd is up and running.");
+}
 
-    var data = [r.id, r.version, r.port, r.testnet];
+function updateInfo(){
+  d3jsonrpc("/rpc/", "LightningRpc.GetInfo", {}, function(terror, error, r){
     var headers = ["Node ID", "Version", "Port", "Testnet"]
-    
     var items = d3.select("#nodeinfolist").selectAll(".item");
-    items.data(data).enter().append("div").classed('item', true);
-    items.data(data).exit().remove();
-    items.html(function(e, t){return "<div class='header'>"+headers[t]+"</div>" + e});
-
-    var row = d3.select("#nodeinfo tbody tr")
-    if(error != null){
-      $('#nodeinfo').removeClass('green').addClass("red");
-      $("#connection-lost").show()
-      data = [];
-    }else{
-      $('#nodeinfo').removeClass("red").addClass("green");
-      $("#connection-lost").hide()
-      info.lightning = r;
+    if (terror){
+      transportFailure(terror);
+      items.remove();
+    } else if(error) {
+      setLightningState('red', "Connection to <em>lightningd</em> lost.")
+      items.remove();
+    } else {
+      var data = [r.id, r.version, r.port, r.testnet];
+      items.data(data).enter().append("div").classed('item', true);
+      items.data(data).exit().remove();
+      items = d3.select("#nodeinfolist").selectAll(".item");
+      items.html(function(e, t){return "<div class='header'>"+headers[t]+"</div>" + e});
+      setLightningState('green', "Lightningd is up and running.");
     }
-    
-    row.selectAll("td").data(data).enter().append("td");
-    row.selectAll("td").data(data).exit().remove();
-    row.selectAll("td").text(function(e){return e;});
   });
 
-  d3jsonrpc("/rpc/", "BitcoinRpc.GetInfo", {}, function(error, r){
+  d3jsonrpc("/rpc/", "BitcoinRpc.GetInfo", {}, function(terror, error, r){
     if (error){
       console.log("Error retrieving bitcoind info", error);
       return;
@@ -102,7 +95,7 @@ function updateInfo(){
       $("#btc-error").html(error).show();
       data = [];
     }else if(r.balance == 0){
-      d3jsonrpc("/rpc/", "Node.GetFundingAddr", {}, function(error, data){
+      d3jsonrpc("/rpc/", "Node.GetFundingAddr", {}, function(terror, error, data){
         console.log(error, data.addr);
         $("#btc-fund-addr").html(data.addr);
       });
@@ -129,7 +122,7 @@ function serializeFormData(form) {
 $('#peersTbl').on('click', '.disconnect-button', function(e) {
   var peerid = $(e.target).data('peerid');
   console.log("Disconnecting", peerid)
-  d3jsonrpc('/rpc/', 'LightningRpc.Close', {"peerid": peerid}, function(error, data){
+  d3jsonrpc('/rpc/', 'LightningRpc.Close', {"peerid": peerid}, function(terror, error, data){
     console.log("Disconnected", data, error);
     updateInfo();
   });
@@ -170,7 +163,7 @@ $(document).ready(function(){
     d3jsonrpc('/rpc/', 'LightningRpc.SendPayment', {
       route: sendPaymentData.route,
       paymenthash: sendPaymentData.paymenthash
-    }, function(error, data){
+    }, function(terror, error, data){
           $('#send-dimmer').removeClass('active');
          if (!error){
            $('#send-dialog').modal('hide');
@@ -195,7 +188,7 @@ $(document).ready(function(){
       amount: window.sendPaymentData.amount,
       destination: window.sendPaymentData.destination,
       risk: 1
-    },function(error, data){
+    },function(terror, error, data){
         
         if (error) {
           var errors = $(e.target).closest('.modal').find('.error').first();
@@ -232,7 +225,7 @@ $(document).ready(function(){
       data.async = true;
       data.port = parseInt(data.port);
       data.capacity = parseInt(data.capacity);
-      d3jsonrpc("/rpc/", "Node.ConnectPeer", data, function(error, data){});
+      d3jsonrpc("/rpc/", "Node.ConnectPeer", data, function(terror, error, data){});
       $(e.target).closest('.modal').modal('hide');
       return false;
       }
@@ -297,7 +290,13 @@ function setKugelblitzState(color, status) {
   return setDaemonState($('#kb-state'), color, status);
 }
 
+var color2state = {
+    red: 'negative',
+    yellow: 'warning',
+    green: 'positive'
+}
 function setDaemonState(element, color, status) {
   element.find('span.fa-stack').removeClass('yellow red green').addClass(color);
-  element.find('.popup .message').html(status);
+  element.find('.popup .message')
+  .html(status).removeClass('warning positive negative').addClass(color2state[color]);
 }
