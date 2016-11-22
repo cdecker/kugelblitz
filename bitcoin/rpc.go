@@ -11,6 +11,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/cdecker/kugelblitz/lightningrpc"
+	"github.com/cdecker/kugelblitz/webui"
 )
 
 type BitcoinRpc struct {
@@ -19,9 +20,9 @@ type BitcoinRpc struct {
 }
 
 type Node struct {
-	lightningRpc *lightningrpc.LightningRpc
-	bitcoinRpc   *BitcoinRpc
-	fundingAddr  string
+	lightning   *webui.Lightning
+	bitcoinRpc  *BitcoinRpc
+	fundingAddr string
 }
 
 type GetBInfoResponse struct {
@@ -162,17 +163,17 @@ func (bc *BitcoinRpc) exec(method string, args []string) (string, error) {
 	return strings.TrimSpace(string(out[:])), nil
 }
 
-func NewNode(lrpc *lightningrpc.LightningRpc, brpc *BitcoinRpc) *Node {
+func NewNode(lrpc *webui.Lightning, brpc *BitcoinRpc) *Node {
 	return &Node{
-		lightningRpc: lrpc,
-		bitcoinRpc:   brpc,
+		lightning:  lrpc,
+		bitcoinRpc: brpc,
 	}
 }
 
 func (n *Node) ConnectPeer(req *ConnectPeerRequest, res *lightningrpc.Empty) error {
 	log.Debugf("Connecting to %s:%d", req.Host, req.Port)
 	var addrResp lightningrpc.NewAddressResponse
-	err := n.lightningRpc.NewAddress(&lightningrpc.Empty{}, &addrResp)
+	err := n.lightning.NewAddress(&lightningrpc.Empty{}, &addrResp)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -203,9 +204,9 @@ func (n *Node) ConnectPeer(req *ConnectPeerRequest, res *lightningrpc.Empty) err
 		FundingTxHex: rawResp.RawTransaction,
 	}
 	if req.Async {
-		go n.lightningRpc.Connect(connReq, &lightningrpc.Empty{})
+		go n.lightning.Connect(connReq, &lightningrpc.Empty{})
 	} else {
-		return n.lightningRpc.Connect(connReq, &lightningrpc.Empty{})
+		return n.lightning.Connect(connReq, &lightningrpc.Empty{})
 	}
 
 	return nil

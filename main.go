@@ -11,7 +11,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/cdecker/kugelblitz/bitcoin"
 	"github.com/cdecker/kugelblitz/lightningrpc"
-	_ "github.com/cdecker/kugelblitz/webui"
+	"github.com/cdecker/kugelblitz/webui"
 )
 
 var (
@@ -57,10 +57,12 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	lightningRpc = lightningrpc.NewLightningRpc(*lightningSock)
+	lrpc := lightningrpc.NewLightningRpc(*lightningSock)
+	lightningRpc := webui.NewLightning(lrpc)
+
 	bitcoinRpc = bitcoin.NewBitcoinRpc(
 		fmt.Sprintf("http://%s:%s@localhost:18332", *bitcoinRpcUser, *bitcoinRpcPass))
-	nodeRpc := bitcoin.NewNode(lightningRpc, bitcoinRpc)
+	nodeRpc := bitcoin.NewNode(&lightningRpc, bitcoinRpc)
 
 	b := maybeStartBitcoind(bitcoinRpc)
 	if b != nil {
@@ -68,7 +70,7 @@ func main() {
 	}
 
 	rpc.Register(bitcoinRpc)
-	rpc.Register(lightningRpc)
+	rpc.Register(&lightningRpc)
 	rpc.Register(nodeRpc)
 
 	http.ListenAndServe(fmt.Sprintf(":%d", *port), nil)

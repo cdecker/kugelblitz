@@ -33,7 +33,7 @@ function d3jsonrpc(url, method, args, cb) {
 }
 
 function updatePeerTable() {
-  d3jsonrpc('/rpc/', "LightningRpc.GetPeers", {}, function(terror, error, data){
+  d3jsonrpc('/rpc/', "Lightning.GetPeers", {}, function(terror, error, data){
     var tbody = d3.select('#peersTbl > tbody');
     var rows = tbody.selectAll("tr");
     if (error) {
@@ -60,7 +60,7 @@ function transportFailure(terror) {
 }
 
 function updateLightningInfo() {
-  d3jsonrpc("/rpc/", "LightningRpc.GetInfo", {}, function(terror, error, r){
+  d3jsonrpc("/rpc/", "Lightning.GetInfo", {}, function(terror, error, r){
     var headers = ["Node ID", "Version", "Port", "Testnet"]
     var items = d3.select("#nodeinfolist").selectAll(".item");
     if (terror){
@@ -147,7 +147,7 @@ function serializeFormData(form) {
 $('#peersTbl').on('click', '.disconnect-button', function(e) {
   var peerid = $(e.target).data('peerid');
   console.log("Disconnecting", peerid)
-  d3jsonrpc('/rpc/', 'LightningRpc.Close', {"peerid": peerid}, function(terror, error, data){
+  d3jsonrpc('/rpc/', 'Lightning.Close', {"peerid": peerid}, function(terror, error, data){
     console.log("Disconnected", data, error);
     updateInfo();
   });
@@ -185,7 +185,7 @@ $(document).ready(function(){
       };
     console.log(window.sendPaymentData)
     $('#send-dimmer').addClass('active');
-    d3jsonrpc('/rpc/', 'LightningRpc.SendPayment', {
+    d3jsonrpc('/rpc/', 'Lightning.SendPayment', {
       route: sendPaymentData.route,
       paymenthash: sendPaymentData.paymenthash
     }, function(terror, error, data){
@@ -209,7 +209,7 @@ $(document).ready(function(){
       amount: parseInt(form.find('input[name="amount"]').val()),
       paymenthash: form.find('input[name="paymenthash"]').val()
     };
-    d3jsonrpc('/rpc/', 'LightningRpc.GetRoute', {
+    d3jsonrpc('/rpc/', 'Lightning.GetRoute', {
       amount: window.sendPaymentData.amount,
       destination: window.sendPaymentData.destination,
       risk: 1
