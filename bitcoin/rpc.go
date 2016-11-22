@@ -203,9 +203,9 @@ func (n *Node) ConnectPeer(req *ConnectPeerRequest, res *lightningrpc.Empty) err
 		FundingTxHex: rawResp.RawTransaction,
 	}
 	if req.Async {
-		go n.lightningRpc.Connect(connReq, &lightningrpc.ConnectResponse{})
+		go n.lightningRpc.Connect(connReq, &lightningrpc.Empty{})
 	} else {
-		return n.lightningRpc.Connect(connReq, &lightningrpc.ConnectResponse{})
+		return n.lightningRpc.Connect(connReq, &lightningrpc.Empty{})
 	}
 
 	return nil

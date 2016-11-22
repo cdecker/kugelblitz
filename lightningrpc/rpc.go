@@ -1,7 +1,6 @@
 package lightningrpc
 
 import (
-	"fmt"
 	"net"
 	"net/rpc/jsonrpc"
 
@@ -107,7 +106,7 @@ func (lr *LightningRpc) GetPeers(_ *Empty, res *GetPeersResponse) error {
 	return err
 }
 
-func (lr *LightningRpc) Connect(req *ConnectRequest, res *ConnectResponse) error {
+func (lr *LightningRpc) Connect(req *ConnectRequest, res *Empty) error {
 	var params []interface{}
 	params = append(params, req.Host)
 	params = append(params, req.Port)
@@ -159,20 +158,30 @@ type SendPaymentResponse struct {
 }
 
 func (lr *LightningRpc) SendPayment(req *SendPaymentRequest, res *SendPaymentResponse) error {
-	fmt.Printf("%#v", req)
 	var params []interface{}
 	params = append(params, req.Route)
 	params = append(params, req.PaymentHash)
 	return lr.call("sendpay", params, res)
 }
 
+type Node struct {
+	Id   string `json:"nodeid"`
+	Port int    `json:"port"`
+	Ip   string `json:"hostname"`
+}
+
+type GetNodesResponse struct {
+	Nodes []Node `json:"nodes"`
+}
+
+func (lr *LightningRpc) GetNodes(req *Empty, res *GetNodesResponse) error {
+	return lr.call("getnodes", req, res)
+}
+
 type ConnectRequest struct {
 	Host         string `json:"host"`
 	Port         uint   `json:"port"`
 	FundingTxHex string `json:"tx"`
-}
-
-type ConnectResponse struct {
 }
 
 func NewLightningRpc(socketPath string) *LightningRpc {
