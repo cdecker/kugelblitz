@@ -157,7 +157,7 @@ func (lr *LightningRpc) SendPayment(route []RouteHop, paymentHash string) (SendP
 
 type Node struct {
 	Id   string `json:"nodeid"`
-	Port int    `json:"port"`
+	Port uint16 `json:"port"`
 	Ip   string `json:"hostname"`
 }
 
