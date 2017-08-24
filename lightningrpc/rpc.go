@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/powerman/rpc-codec/jsonrpc2"
+	log "github.com/sirupsen/logrus"
 )
 
 type LightningRpc struct {

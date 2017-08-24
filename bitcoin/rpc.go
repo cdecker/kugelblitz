@@ -9,9 +9,9 @@ import (
 	"os/exec"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/cdecker/kugelblitz/lightningrpc"
 	"github.com/cdecker/kugelblitz/webui"
+	log "github.com/sirupsen/logrus"
 )
 
 type BitcoinRpc struct {

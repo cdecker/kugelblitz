@@ -8,10 +8,10 @@ import (
 	"os"
 	"path/filepath"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/cdecker/kugelblitz/bitcoin"
 	"github.com/cdecker/kugelblitz/lightningrpc"
 	"github.com/cdecker/kugelblitz/webui"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
