@@ -13,6 +13,7 @@ This will download the docker image, start `bitcoind`, `lightningd` and the kuge
 Notice that the `bitcoind` instance is synchronizing with testnet, which may take a few hours. In order not to have to do that all the time (and not losing your hard earned testcoins) we recommend that you use this instead:
 
 ```bash
+mkdir bitcoin lightning; sudo chown -R 1000:1000 bitcoin lightning
 sudo docker run -p 19735:19735
 	-v `pwd`/bitcoin:/bitcoin
 	-v `pwd`/lightning:/lightning
