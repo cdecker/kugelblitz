@@ -61,7 +61,13 @@ func (lr *LightningRpc) call(method string, req interface{}, res interface{}) er
 	}
 	defer clientTCP.Close()
 	err = clientTCP.Call(method, req, res)
-	return err
+	if err != nil {
+		log.Debugf("error calling %s: %v", method, err)
+		return errors.Wrap(err, fmt.Sprintf("error calling %s", method))
+	} else {
+		log.Debugf("method %s returned %v", method, err)
+		return nil
+	}
 }
 
 func (lr *LightningRpc) NewAddress() (NewAddressResponse, error) {
@@ -111,9 +117,10 @@ func (lr *LightningRpc) Close(peerId string) error {
 }
 
 type RouteHop struct {
-	NodeId string `json:"id"`
-	Amount uint64 `json:"msatoshi"`
-	Delay  uint32 `json:"delay"`
+	NodeId  string `json:"id"`
+	Amount  uint64 `json:"msatoshi"`
+	Delay   uint32 `json:"delay"`
+	Channel string `json:"channel"`
 }
 
 type Route struct {
@@ -146,7 +153,6 @@ type SendPaymentResponse struct {
 }
 
 func (lr *LightningRpc) SendPayment(route []RouteHop, paymentHash string) (SendPaymentResponse, error) {
-	fmt.Println("HELLO")
 	var params []interface{}
 	params = append(params, route)
 	params = append(params, paymentHash)
@@ -155,10 +161,15 @@ func (lr *LightningRpc) SendPayment(route []RouteHop, paymentHash string) (SendP
 	return res, err
 }
 
+type NodeAddress struct {
+	Type    string `json:"type"`
+	Address string `json:"address"`
+	Port    uint16 `json:"port"`
+}
+
 type Node struct {
-	Id   string `json:"nodeid"`
-	Port uint16 `json:"port"`
-	Ip   string `json:"hostname"`
+	Id        string        `json:"nodeid"`
+	Addresses []NodeAddress `json:"addresses"`
 }
 
 type GetNodesResponse struct {
@@ -177,8 +188,28 @@ type ConnectRequest struct {
 	FundingTxHex string `json:"tx"`
 }
 
+type Invoice struct {
+	PaymentHash string `json:"rhash"`
+	PaymentKey  string `json:"paymentKey"`
+}
+
+func (lr *LightningRpc) Invoice(amount uint64, label string) (Invoice, error) {
+	var params []interface{}
+	params = append(params, amount)
+	params = append(params, label)
+	res := Invoice{}
+	err := lr.call("invoice", params, &res)
+	return res, err
+}
+
 func NewLightningRpc(socketPath string) *LightningRpc {
 	return &LightningRpc{
 		socketPath: socketPath,
 	}
+}
+
+func (lr *LightningRpc) Stop() error {
+	var params []interface{}
+	res := Empty{}
+	return lr.call("stop", params, &res)
 }

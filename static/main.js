@@ -15,6 +15,8 @@ var info = {
   bitcoin: {}
 };
 
+var updateInterval = 30000
+
 var sendPaymentData = null;
 
 function d3jsonrpc(url, method, args, cb) {
@@ -45,8 +47,8 @@ function updatePeerTable() {
       rows.enter().append("tr");
       rows.exit().remove();
       rows.html(function(d) {
-        return ("<td>" + 
-                d.peerid + "</td><td>"+ d.connected+"</td><td>" + 
+        return ("<td>" +
+                d.peerid.substring(0,15) + "...</td><td>"+ d.connected+"</td><td>" +
                 d.state +"</td><td><button class='ui icon button open-connect-modal negative tiny disconnect-button' data-peerid='" + d.peerid + "'><i class='minus circle icon'></i> Disconnect</button></td></tr>");
       });
       rows.attr('class', function(d){ return stateColors[d.state]; });;
@@ -107,7 +109,7 @@ function updateBitcoinInfo() {
       $("#btc-error").html(error).hide();
       setBitcoinState('yellow', "Your bitcoin node does not have any funds available. We can't create channels without funds.")
     }else{
-      $('#btcinfo').removeClass("red").removeClass("attached").addClass("green") 
+      $('#btcinfo').removeClass("red").removeClass("attached").addClass("green")
       $("#btc-no-funds-error").hide();
       $("#btc-error").html(error).hide();
       info.bitcoin = r;
@@ -155,9 +157,9 @@ $('#peersTbl').on('click', '.disconnect-button', function(e) {
 });
 
 $(document).ready(function(){
-  window.setInterval(updatePeerTable, 2000);
+  window.setInterval(updatePeerTable, updateInterval);
   updatePeerTable()
-  window.setInterval(updateInfo, 2500);
+  window.setInterval(updateInfo, updateInterval);
   updateInfo();
 
   $('.open-connect-modal').click(function(){
@@ -214,13 +216,14 @@ $(document).ready(function(){
       destination: window.sendPaymentData.destination,
       risk: 1
     },function(terror, error, data){
-        
+
         if (error) {
           var errors = $(e.target).closest('.modal').find('.error').first();
-          errors.empty().append("<ul><li>Error computing route: " + error.message + "</li></ul>").show();
+          //errors.empty().append("<ul><li>Error computing route: " + error.message + "</li></ul>").show();
         } else {
           window.sendPaymentData.route = data.route
-          showRoute(data.route);
+            showRoute(data.route);
+	    $(window).trigger('resize');
         }
       });
     return false;
@@ -237,7 +240,7 @@ $(document).ready(function(){
       return false;
     }
   });
-  
+
   $('#connect-dialog form').form({
     on: 'blur',
     fields: {
@@ -286,7 +289,7 @@ function showRoute(route) {
       pos = "-first";
     else if (i == hops.length - 1)
       pos = '-last';
-            
+
     body.append('<tr><td class="route-segment"><svg viewBox="0 0 43 43"><use xlink:href="#route-segment'+pos+'"></svg></td><td>' + e.id + '</td><td> ' +e.msatoshi+ ' </td></tr>');
   });
 
