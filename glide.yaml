@@ -1,12 +1,8 @@
-package: github.com/cdecker/lightningctl
+package: github.com/cdecker/kugelblitz
 import:
-- package: github.com/sirupsen/logrus
-  version: ~0.10.0
 - package: github.com/powerman/rpc-codec
-  version: b12587c9f0f1616a11abaa9f576238176fef2740
   subpackages:
   - jsonrpc2
-- package: github.com/jteeuwen/go-bindata
-  version: ^3.0.7
+- package: github.com/prometheus/common
   subpackages:
-  - '...'
+  - log
