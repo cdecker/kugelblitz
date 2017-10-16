@@ -1,8 +1,6 @@
 package webui
 
 import (
-	"fmt"
-
 	lr "github.com/cdecker/kugelblitz/lightningrpc"
 )
 
@@ -20,7 +18,7 @@ func NewLightning(lrpc *lr.LightningRpc) Lightning {
 	}
 }
 
-func (l *Lightning) IsAlive() bool {
+func (l *Lightning) IsAlive(_ *lr.Empty) bool {
 	_, err := l.lrpc.GetInfo()
 	return err == nil
 }
@@ -55,11 +53,17 @@ func (l *Lightning) NewAddress(_ *lr.Empty, res *lr.NewAddressResponse) error {
 
 func (l *Lightning) SendPayment(req *lr.SendPaymentRequest, res *lr.SendPaymentResponse) error {
 	response, err := l.lrpc.SendPayment(req.Route, req.PaymentHash)
-	fmt.Printf("%#v\n", response)
 	*res = response
 	return err
 }
 
+func (l *Lightning) AddFunds(rawtx string) error {
+	return l.lrpc.AddFunds(rawtx)
+}
+func (l *Lightning) FundChannel(nodeid string, capacity uint64) error {
+	return l.lrpc.FundChannel(nodeid, capacity)
+}
+
 func (l *Lightning) Connect(req *lr.ConnectRequest, _ *lr.Empty) error {
-	return l.lrpc.Connect(req.Host, req.Port, req.FundingTxHex)
+	return l.lrpc.Connect(req.Host, req.Port, req.NodeId)
 }

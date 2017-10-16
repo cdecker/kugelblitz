@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/pkg/errors"
 	"github.com/powerman/rpc-codec/jsonrpc2"
 	log "github.com/sirupsen/logrus"
 )
@@ -42,14 +43,38 @@ type Peer struct {
 }
 
 type Channel struct {
-	From            string `json: "from"`
-	To              string `json: "to"`
+	From            string `json:"from"`
+	To              string `json:"to"`
 	BaseFee         uint   `json:"base_fee"`
 	ProportionalFee uint   `json:"proportional_fee"`
 }
 
 type GetChannelsResponse struct {
 	Channels []Channel `json:"channels"`
+}
+
+type AddFundsRequest struct {
+	RawTransaction string `json:"rawtx"`
+}
+
+type RouteHop struct {
+	NodeId  string `json:"id"`
+	Amount  uint64 `json:"msatoshi"`
+	Delay   uint32 `json:"delay"`
+	Channel string `json:"channel"`
+}
+
+type Route struct {
+	Hops []RouteHop `json:"route"`
+}
+
+type GetRouteRequest struct {
+	Destination string  `json:"destination"`
+	Amount      uint64  `json:"amount"`
+	RiskFactor  float32 `json:"risk"`
+}
+
+type FundChannelRequest struct {
 }
 
 func (lr *LightningRpc) call(method string, req interface{}, res interface{}) error {
@@ -116,23 +141,6 @@ func (lr *LightningRpc) Close(peerId string) error {
 	return lr.call("close", params, &Empty{})
 }
 
-type RouteHop struct {
-	NodeId  string `json:"id"`
-	Amount  uint64 `json:"msatoshi"`
-	Delay   uint32 `json:"delay"`
-	Channel string `json:"channel"`
-}
-
-type Route struct {
-	Hops []RouteHop `json:"route"`
-}
-
-type GetRouteRequest struct {
-	Destination string  `json:"destination"`
-	Amount      uint64  `json:"amount"`
-	RiskFactor  float32 `json:"risk"`
-}
-
 func (lr *LightningRpc) GetRoute(destination string, amount uint64, riskfactor float32) (Route, error) {
 	var params []interface{}
 	params = append(params, destination)
@@ -183,9 +191,9 @@ func (lr *LightningRpc) GetNodes() (GetNodesResponse, error) {
 }
 
 type ConnectRequest struct {
-	Host         string `json:"host"`
-	Port         uint   `json:"port"`
-	FundingTxHex string `json:"tx"`
+	Host   string `json:"host"`
+	Port   uint   `json:"port"`
+	NodeId string `json:"nodeid"`
 }
 
 type Invoice struct {
@@ -200,6 +208,21 @@ func (lr *LightningRpc) Invoice(amount uint64, label string) (Invoice, error) {
 	res := Invoice{}
 	err := lr.call("invoice", params, &res)
 	return res, err
+}
+
+func (lr *LightningRpc) AddFunds(rawtx string) error {
+	var params []interface{}
+	params = append(params, rawtx)
+	res := Empty{}
+	return lr.call("addfunds", params, &res)
+}
+
+func (lr *LightningRpc) FundChannel(nodeid string, capacity uint64) error {
+	var params []interface{}
+	params = append(params, nodeid)
+	params = append(params, capacity)
+	res := Empty{}
+	return lr.call("fundchannel", params, &res)
 }
 
 func NewLightningRpc(socketPath string) *LightningRpc {

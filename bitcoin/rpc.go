@@ -45,6 +45,7 @@ type GetBInfoResponse struct {
 type ConnectPeerRequest struct {
 	Host     string `json:"host"`
 	Port     uint   `json:"port"`
+	NodeId   string `json:"nodeid"`
 	Capacity uint64 `json:"capacity"`
 	Async    bool   `json:"async"`
 }
@@ -182,7 +183,7 @@ func (n *Node) ConnectPeer(req *ConnectPeerRequest, res *lightningrpc.Empty) err
 	var sendResp TxReference
 	err = n.bitcoinRpc.SendToAddress(&SendToAddressRequest{
 		Address: addrResp.Address,
-		Amount:  fmt.Sprintf("%f", float64(req.Capacity)*10e-8),
+		Amount:  fmt.Sprintf("%f", float64(req.Capacity)*10e-8*1.01),
 	}, &sendResp)
 	if err != nil {
 		log.Error(err)
@@ -196,20 +197,23 @@ func (n *Node) ConnectPeer(req *ConnectPeerRequest, res *lightningrpc.Empty) err
 		return err
 	}
 
+	err = n.lightning.AddFunds(rawResp.RawTransaction)
+
 	// Finally we need to tell lightningd to connect to that node
 	// with the funds provided
 	connReq := &lightningrpc.ConnectRequest{
-		Host:         req.Host,
-		Port:         req.Port,
-		FundingTxHex: rawResp.RawTransaction,
+		Host:   req.Host,
+		Port:   req.Port,
+		NodeId: req.NodeId,
 	}
-	if req.Async {
-		go n.lightning.Connect(connReq, &lightningrpc.Empty{})
-	} else {
-		return n.lightning.Connect(connReq, &lightningrpc.Empty{})
+	err = n.lightning.Connect(connReq, &lightningrpc.Empty{})
+	if err != nil {
+		log.Error(err)
 	}
 
-	return nil
+	err = n.lightning.FundChannel(req.NodeId, req.Capacity)
+
+	return err
 }
 
 type FundingAddr struct {

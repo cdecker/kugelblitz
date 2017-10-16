@@ -15,7 +15,7 @@ var info = {
   bitcoin: {}
 };
 
-var updateInterval = 30000
+var updateInterval = 1000;
 
 var sendPaymentData = null;
 
@@ -246,7 +246,8 @@ $(document).ready(function(){
     fields: {
       capacity: 'integer[100000..4000000]',
       host: ['empty'],
-      port: 'integer[1..65535]'
+	port: 'integer[1..65535]',
+	nodeid: ['empty']
     },
     onSuccess: function(e){
       var data = serializeFormData($('#connect-dialog form'));
