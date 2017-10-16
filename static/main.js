@@ -15,7 +15,7 @@ var info = {
   bitcoin: {}
 };
 
-var updateInterval = 1000;
+var updateInterval = 30000;
 
 var sendPaymentData = null;
 
@@ -172,19 +172,14 @@ $(document).ready(function(){
 
   $('#send-dialog form').form({
     on: 'blur',
-    fields: {
-      destination: ['exactLength[66]'],
-      paymenthash: ['exactLength[64]'],
-      amount: ['integer[1..4000000000]']
-    },
     onSuccess: function (e) {
       var form = $(e.target);
-      window.sendPaymentData = {
-        destination: form.find('input[name="destination"]').val(),
-        amount: parseInt(form.find('input[name="amount"]').val()),
-        paymenthash: form.find('input[name="paymenthash"]').val(),
+      //window.sendPaymentData = {
+        //destination: form.find('input[name="destination"]').val(),
+        //amount: parseInt(form.find('input[name="amount"]').val()),
+        //paymenthash: form.find('input[name="paymenthash"]').val(),
         route: window.sendPaymentData.route
-      };
+      //};
     console.log(window.sendPaymentData)
     $('#send-dimmer').addClass('active');
     d3jsonrpc('/rpc/', 'Lightning.SendPayment', {
@@ -207,21 +202,18 @@ $(document).ready(function(){
   $('#send-form input').on('blur', function(e) {
     var form = $(e.target).closest('form');
     window.sendPaymentData = {
-      destination: form.find('input[name="destination"]').val(),
-      amount: parseInt(form.find('input[name="amount"]').val()),
-      paymenthash: form.find('input[name="paymenthash"]').val()
+      destination: form.find('input[name="destination"]').val()
     };
-    d3jsonrpc('/rpc/', 'Lightning.GetRoute', {
-      amount: window.sendPaymentData.amount,
-      destination: window.sendPaymentData.destination,
-      risk: 1
+    d3jsonrpc('/rpc/', 'Lightning.GetPaymentRequestInfo', {
+      destination: window.sendPaymentData.destination
     },function(terror, error, data){
 
         if (error) {
           var errors = $(e.target).closest('.modal').find('.error').first();
           //errors.empty().append("<ul><li>Error computing route: " + error.message + "</li></ul>").show();
         } else {
-          window.sendPaymentData.route = data.route
+	    window.sendPaymentData.paymenthash = data.paymenthash;
+	    window.sendPaymentData.amount = data.amount;
             showRoute(data.route);
 	    $(window).trigger('resize');
         }
