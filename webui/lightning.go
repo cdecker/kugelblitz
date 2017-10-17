@@ -2,8 +2,6 @@ package webui
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 
 	lr "github.com/cdecker/kugelblitz/lightningrpc"
 )
@@ -85,20 +83,30 @@ type PaymentRequestInfoResponse struct {
 func (l *Lightning) GetPaymentRequestInfo(req *PaymentRequestInfoRequest, res *PaymentRequestInfoResponse) error {
 	var route lr.Route
 	fmt.Println(req.Destination)
-	parts := strings.Split(req.Destination, ":")
-	amount, err := strconv.ParseUint(parts[2], 10, 64)
+
+	req2 := lr.DecodePayRequest{
+		PayRequest: req.Destination,
+	}
+
+	res2 := lr.DecodePayResponse{}
+	err := l.lrpc.DecodePay(&req2, &res2)
 	if err != nil {
 		return err
 	}
+	fmt.Printf("%v\n", res2)
+
 	routeReq := &lr.GetRouteRequest{
-		Destination: parts[0],
-		Amount:      amount,
+		Destination: res2.Payee,
+		Amount:      res2.Amount,
 		RiskFactor:  1,
 	}
-	fmt.Println(parts[0])
-	res.Amount = amount
-	res.PaymentHash = parts[1]
+	fmt.Printf("%v\n", routeReq)
+	res.Amount = res2.Amount
+	res.PaymentHash = res2.PaymentKey
 	err = l.GetRoute(routeReq, &route)
+	if err != nil {
+		return err
+	}
 	res.Hops = route.Hops
 	return nil
 }

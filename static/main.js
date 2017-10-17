@@ -15,7 +15,7 @@ var info = {
   bitcoin: {}
 };
 
-var updateInterval = 30000;
+var updateInterval = 1000;
 
 var sendPaymentData = null;
 

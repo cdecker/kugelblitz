@@ -77,6 +77,21 @@ type GetRouteRequest struct {
 type FundChannelRequest struct {
 }
 
+type DecodePayRequest struct {
+	PayRequest string `json:"payrequest"`
+}
+
+type DecodePayResponse struct {
+	Currency    string `json:"currency"`
+	Timestamp   uint64 `json:"timestamp"`
+	Expiry      uint32 `json:"expiry"`
+	Payee       string `json:"payee"`
+	Amount      uint64 `json:"msatoshi"`
+	Description string `json:"description"`
+	PaymentKey  string `json:"payment_hash"`
+	Signature   string `json:"signature"`
+}
+
 func (lr *LightningRpc) call(method string, req interface{}, res interface{}) error {
 	log.Debugf("Calling lightning.%s with args %v", method, req)
 
@@ -223,6 +238,12 @@ func (lr *LightningRpc) FundChannel(nodeid string, capacity uint64) error {
 	params = append(params, capacity)
 	res := Empty{}
 	return lr.call("fundchannel", params, &res)
+}
+
+func (lr *LightningRpc) DecodePay(req *DecodePayRequest, res *DecodePayResponse) error {
+	var params []interface{}
+	params = append(params, req.PayRequest)
+	return lr.call("decodepay", params, res)
 }
 
 func NewLightningRpc(socketPath string) *LightningRpc {
