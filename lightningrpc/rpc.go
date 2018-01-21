@@ -261,10 +261,14 @@ func (lr *LightningRpc) ListInvoice(_ *Empty, res *ListInvoiceResp) error {
 }
 
 type Payment struct {
+	Id          uint
+	PaymentHash string `json:"payment_hash"`
+	Destination string
+	Msatoshi    uint64
+	Timestamp   uint64
+	Status      string
 }
-type ListPaymentsResp struct {
-	Payments []Payment
-}
+type ListPaymentsResp []Payment
 
 func (lr *LightningRpc) ListPayments(_ *Empty, res *ListPaymentsResp) error {
 	var params []interface{}

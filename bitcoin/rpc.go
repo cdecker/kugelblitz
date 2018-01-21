@@ -240,21 +240,17 @@ type HistoryReq struct{}
 
 type HistoryEntry struct {
 }
-type HistoryResp struct {
-	entries []HistoryEntry
-}
+type HistoryResp []HistoryEntry
 
-func (n *Node) GetHistory(req *HistoryReq, resp *HistoryResp) error {
-	invResp := lightningrpc.ListInvoiceResp{}
-	err := n.lightning.RPC.ListInvoice(&lightningrpc.Empty{}, &invResp)
+func (n *Node) GetHistory(req *HistoryReq, resp *lightningrpc.ListPaymentsResp) error {
+	//err := n.lightning.RPC.ListInvoice(&lightningrpc.Empty{}, &invResp)
+	//if err != nil {
+	//	return err
+	//}
+	err := n.lightning.RPC.ListPayments(&lightningrpc.Empty{}, resp)
 	if err != nil {
 		return err
 	}
-	payResp := lightningrpc.ListPaymentsResp{}
-	err = n.lightning.RPC.ListPayments(&lightningrpc.Empty{}, &payResp)
-	if err != nil {
-		return err
-	}
-	// TODO merge and return
+
 	return nil
 }
