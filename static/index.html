@@ -104,6 +104,17 @@
 	-->
 	<button id="send-button" class="ui positive button" style="border-left: 1px white solid;"><i class="arrow circle up icon"></i>Send payment</button>
       </div>
+      <table class="ui celled table" id="historyTbl">
+	<thead>
+	  <tr>
+	    <th class="ui center">Source / Destination</th>
+	    <th class="ui center">Amount (mSatoshi)</th>
+	    <th class="ui center">Status</th>
+	  </tr>
+	</thead>
+	<tbody>
+	</tbody>
+      </table>
     </div>
   </div>
 
@@ -170,7 +181,7 @@
       </svg>
       <div id="route-info">
 	<ul>
-	  <li>Destination: <span id="route-destination"></span></li>
+	  <!--<li>Destination: <span id="route-destination"></span></li>-->
 	  <li>Amount: <span id="route-amount"></span>mSatoshi</li>
 	  <li>Payment Hash: <span id="route-payment-hash"></span></li>
 	</ul>

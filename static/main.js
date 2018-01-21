@@ -15,7 +15,7 @@ var info = {
   bitcoin: {}
 };
 
-var updateInterval = 30000;
+var updateInterval = 1000;
 
 var sendPaymentData = null;
 
@@ -36,6 +36,27 @@ function d3jsonrpc(url, method, args, cb) {
 
 function updateHistory() {
     d3jsonrpc('/rpc/', "Node.GetHistory", {}, function(terror, error, data){
+	console.log(data);
+    var tbody = d3.select('#historyTbl > tbody');
+    var rows = tbody.selectAll("tr");
+    if (error) {
+      rows.remove();
+    } else if(terror) {
+      transportFailure(terror);
+    } else {
+
+      rows = rows.data(data);
+      rows.enter().append("tr");
+	rows.exit().remove();
+	rows.html(function(d) {
+	    console.log(d);
+	    return (
+		"<td>" + d.Destination + "</td>" +
+		    "<td>" + d.Msatoshi + "</td>" +
+		    "<td>" + d.Status + "</td>"
+	    );
+      });
+    }
     });
 }
 
@@ -191,11 +212,12 @@ $(document).ready(function(){
     $('#send-dimmer').addClass('active');
     d3jsonrpc('/rpc/', 'Lightning.SendPayment', {
       route: sendPaymentData.route,
-      paymenthash: sendPaymentData.paymenthash
+	paymenthash: sendPaymentData.paymenthash
     }, function(terror, error, data){
           $('#send-dimmer').removeClass('active');
          if (!error){
-           $('#send-dialog').modal('hide');
+             $('#send-dialog').modal('hide');
+	     updateHistory();
          } else {
             var errors = $(e.target).closest('.modal').find('.error').first();
             errors.empty().append("<ul><li>Error sending payment: " + error.message + "</li></ul>").show();
