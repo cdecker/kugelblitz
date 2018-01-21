@@ -172,7 +172,7 @@ func NewNode(lrpc *webui.Lightning, brpc *BitcoinRpc) *Node {
 }
 
 func (n *Node) ConnectPeer(req *ConnectPeerRequest, res *lightningrpc.Empty) error {
-	log.Debugf("Connecting to %s:%d", req.Host, req.Port)
+	fmt.Printf("Connecting to %s:%d", req.Host, req.Port)
 	var addrResp lightningrpc.NewAddressResponse
 	err := n.lightning.NewAddress(&lightningrpc.Empty{}, &addrResp)
 	if err != nil {
@@ -233,5 +233,28 @@ type KugelblitzInfo struct {
 }
 
 func (n *Node) GetInfo(req *lightningrpc.Empty, res *KugelblitzInfo) error {
+	return nil
+}
+
+type HistoryReq struct{}
+
+type HistoryEntry struct {
+}
+type HistoryResp struct {
+	entries []HistoryEntry
+}
+
+func (n *Node) GetHistory(req *HistoryReq, resp *HistoryResp) error {
+	invResp := lightningrpc.ListInvoiceResp{}
+	err := n.lightning.RPC.ListInvoice(&lightningrpc.Empty{}, &invResp)
+	if err != nil {
+		return err
+	}
+	payResp := lightningrpc.ListPaymentsResp{}
+	err = n.lightning.RPC.ListPayments(&lightningrpc.Empty{}, &payResp)
+	if err != nil {
+		return err
+	}
+	// TODO merge and return
 	return nil
 }

@@ -12,11 +12,13 @@ import (
 
 type Lightning struct {
 	lrpc *lr.LightningRpc
+	RPC  *lr.LightningRpc
 }
 
 func NewLightning(lrpc *lr.LightningRpc) Lightning {
 	return Lightning{
 		lrpc: lrpc,
+		RPC:  lrpc,
 	}
 }
 
@@ -67,7 +69,7 @@ func (l *Lightning) FundChannel(nodeid string, capacity uint64) error {
 }
 
 func (l *Lightning) Connect(req *lr.ConnectRequest, _ *lr.Empty) error {
-	return l.lrpc.Connect(req.Host, req.Port, req.NodeId)
+	return l.lrpc.Connect(req.NodeId, req.Host, req.Port)
 }
 
 type PaymentRequestInfoRequest struct {
@@ -93,14 +95,14 @@ func (l *Lightning) GetPaymentRequestInfo(req *PaymentRequestInfoRequest, res *P
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%v\n", res2)
+	fmt.Printf("%#v\n", res2)
 
 	routeReq := &lr.GetRouteRequest{
 		Destination: res2.Payee,
 		Amount:      res2.Amount,
 		RiskFactor:  1,
 	}
-	fmt.Printf("%v\n", routeReq)
+	fmt.Printf("%#v\n", routeReq)
 	res.Amount = res2.Amount
 	res.PaymentHash = res2.PaymentKey
 	err = l.GetRoute(routeReq, &route)

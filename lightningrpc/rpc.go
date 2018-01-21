@@ -43,10 +43,14 @@ type Peer struct {
 }
 
 type Channel struct {
-	From            string `json:"from"`
-	To              string `json:"to"`
-	BaseFee         uint   `json:"base_fee"`
-	ProportionalFee uint   `json:"proportional_fee"`
+	From            string `json:"source"`
+	To              string `json:"destination"`
+	BaseFee         uint   `json:"base_fee_millisatoshi"`
+	ProportionalFee uint   `json:"fee_per_millionth"`
+	ShortChannelId  string `json:"short_channel_id"`
+	Flags           uint
+	LastUpdate      uint64 `json:"last_update"`
+	Delay           uint
 }
 
 type GetChannelsResponse struct {
@@ -138,11 +142,11 @@ func (lr *LightningRpc) GetPeers() (GetPeersResponse, error) {
 	return res, err
 }
 
-func (lr *LightningRpc) Connect(host string, port uint, fundingTx string) error {
+func (lr *LightningRpc) Connect(nodeid string, address string, port uint) error {
 	var params []interface{}
-	params = append(params, host)
+	params = append(params, nodeid)
+	params = append(params, address)
 	params = append(params, port)
-	params = append(params, fundingTx)
 	return lr.call("connect", params, &Empty{})
 }
 
@@ -214,6 +218,7 @@ type ConnectRequest struct {
 type Invoice struct {
 	PaymentHash string `json:"rhash"`
 	PaymentKey  string `json:"paymentKey"`
+	Label       string `json:"label"`
 }
 
 func (lr *LightningRpc) Invoice(amount uint64, label string) (Invoice, error) {
@@ -246,6 +251,26 @@ func (lr *LightningRpc) DecodePay(req *DecodePayRequest, res *DecodePayResponse)
 	return lr.call("decodepay", params, res)
 }
 
+type ListInvoiceResp struct {
+	invoices []Invoice
+}
+
+func (lr *LightningRpc) ListInvoice(_ *Empty, res *ListInvoiceResp) error {
+	// TODO implement
+	return nil
+}
+
+type Payment struct {
+}
+type ListPaymentsResp struct {
+	Payments []Payment
+}
+
+func (lr *LightningRpc) ListPayments(_ *Empty, res *ListPaymentsResp) error {
+	var params []interface{}
+	params = append(params, "dummy")
+	return lr.call("listpayments", params, res)
+}
 func NewLightningRpc(socketPath string) *LightningRpc {
 	return &LightningRpc{
 		socketPath: socketPath,

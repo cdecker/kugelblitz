@@ -15,7 +15,7 @@ var info = {
   bitcoin: {}
 };
 
-var updateInterval = 1000;
+var updateInterval = 30000;
 
 var sendPaymentData = null;
 
@@ -32,6 +32,11 @@ function d3jsonrpc(url, method, args, cb) {
       }
     }
   );
+}
+
+function updateHistory() {
+    d3jsonrpc('/rpc/', "Node.GetHistory", {}, function(terror, error, data){
+    });
 }
 
 function updatePeerTable() {
@@ -161,6 +166,8 @@ $(document).ready(function(){
   updatePeerTable()
   window.setInterval(updateInfo, updateInterval);
   updateInfo();
+//  window.setInterval(updateInfo, updateHistory);
+    updateHistory();
 
   $('.open-connect-modal').click(function(){
     $("#connect-dialog").modal("show");
@@ -215,6 +222,9 @@ $(document).ready(function(){
 	    window.sendPaymentData.paymenthash = data.paymenthash;
 	    window.sendPaymentData.amount = data.amount;
             showRoute(data.route);
+	    $('#route-destination').text("");
+	    $('#route-payment-hash').text(data.paymenthash);
+	    $('#route-amount').text(data.amount);
 	    $(window).trigger('resize');
         }
       });
@@ -268,7 +278,7 @@ $(document).ready(function(){
 function showRoute(route) {
   window.sendPaymentData.route = route;
   var hops = [
-    {id: info.lightning.id + " (source)", delay: 0, msatoshi: 0}
+    {id: "This node (source)", delay: 0, msatoshi: 0}
   ]
   $.each(route, function(_, e){
     hops.push(e);
