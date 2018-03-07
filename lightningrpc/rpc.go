@@ -28,18 +28,26 @@ type GetInfoResponse struct {
 	BlockHeight uint   `json:"blockheight"`
 }
 
-type GetPeersResult struct {
+type ListPeersResult struct {
 	Peers []Peer
 }
 
+type PeerChannel struct {
+	State         string `json:"state"`
+	FundingTxId   string `json:"funding_txid"`
+	MsatoshiToUs  uint64 `json:"msatoshi_to_us"`
+	MsatoshiTotal uint64 `json:"msatoshi_total"`
+}
+
 type Peer struct {
-	State       string `json:"state"`
-	PeerId      string `json:"peerid"`
-	Connected   bool   `json:"connected"`
-	OurAmount   int    `json:"our_amount"`
-	TheirAmount int    `json:"their_amount"`
-	OurFee      int    `json:"our_fee"`
-	TheirFee    int    `json:"their_fee"`
+	State       string        `json:"state"`
+	PeerId      string        `json:"id"`
+	Connected   bool          `json:"connected"`
+	OurAmount   int           `json:"our_amount"`
+	TheirAmount int           `json:"their_amount"`
+	OurFee      int           `json:"our_fee"`
+	TheirFee    int           `json:"their_fee"`
+	Channels    []PeerChannel `json:"channels"`
 }
 
 type Channel struct {
@@ -132,13 +140,13 @@ func (lr *LightningRpc) GetChannels() (GetChannelsResponse, error) {
 	return res, err
 }
 
-type GetPeersResponse struct {
+type ListPeersResponse struct {
 	Peers []Peer `json:"peers"`
 }
 
-func (lr *LightningRpc) GetPeers() (GetPeersResponse, error) {
-	res := GetPeersResponse{}
-	err := lr.call("getpeers", &Empty{}, &res)
+func (lr *LightningRpc) ListPeers() (ListPeersResponse, error) {
+	res := ListPeersResponse{}
+	err := lr.call("listpeers", &Empty{}, &res)
 	return res, err
 }
 
@@ -268,11 +276,38 @@ type Payment struct {
 	Timestamp   uint64
 	Status      string
 }
-type ListPaymentsResp []Payment
+type ListPaymentsResp struct {
+	Payments []Payment `json:"payments"`
+}
+
+type ListFundsOutput struct {
+	TransactionID string `json:"txid"`
+	OutputIndex   uint32 `json:"output"`
+	Value         uint64 `json:"value"`
+}
+
+type ListFundsChannel struct {
+	PeerId              string `json:"peer_id"`
+	ChannelSatoshi      uint64 `json:"channel_sat"`
+	ChannelTotalSatoshi uint64 `json:"channel_total_sat"`
+}
+
+type ListFundsResponse struct {
+	Outputs  []ListFundsOutput
+	Channels []ListFundsChannel
+}
+
+func (lr *LightningRpc) ListFunds(_ *Empty, res *ListFundsResponse) error {
+	var params []interface{}
+	params = append(params, nil)
+	params = append(params, nil)
+	return lr.call("listfunds", params, res)
+}
 
 func (lr *LightningRpc) ListPayments(_ *Empty, res *ListPaymentsResp) error {
 	var params []interface{}
-	params = append(params, "dummy")
+	params = append(params, nil)
+	params = append(params, nil)
 	return lr.call("listpayments", params, res)
 }
 func NewLightningRpc(socketPath string) *LightningRpc {

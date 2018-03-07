@@ -11,7 +11,7 @@
   <title>Kugelblitz</title>
   <link rel="stylesheet" type="text/css" href="/static/semantic.css">
   <link rel="stylesheet" type="text/css" href="/static/grid.css">
-  <link rel="stylesheet" type="text/css" href="http://fontawesome.io/assets/font-awesome/css/font-awesome.css">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <link rel="shortcut icon" type="image/png" href="/static/favicon.png"/>
   <link rel="stylesheet" type="text/css" href="/static/custom.css">
 </head>
@@ -22,6 +22,13 @@
     <div class="header item">Kugelblitz</div>
   </div>
 
+  <div class="ui grid">
+    <div class="ui sixteen column center aligned" style="font-size: 4em; font-weight: bold; padding: 50px;">
+      <span id="balance">...</span>
+      <i class="fa fa-btc"></i>
+    </div>
+  </div>
+  <!--
   <div class="ui grid">
     <div class="five wide column center aligned" id="btc-state">
       <h3>Bitcoin status</h3>
@@ -95,13 +102,11 @@
       </div>
     </div>
   </div>
-
+  -->
   <div class="ui grid">
     <div class="sixteen wide column">
       <div class="ui buttons fluid">
-	<!--
 	<button id="receive-button" class="ui blue button" style="border-right: 1px white solid;"><i class="arrow circle down icon"></i> Receive payment</button>
-	-->
 	<button id="send-button" class="ui positive button" style="border-left: 1px white solid;"><i class="arrow circle up icon"></i>Send payment</button>
       </div>
       <table class="ui celled table" id="historyTbl">
@@ -129,8 +134,12 @@
 	<thead>
 	  <tr>
 	    <th class="ui center">Peer ID</th>
+	    <!--
 	    <th class="ui center">Connected</th>
+	    -->
+	    <!--
 	    <th class="ui center">State</th>
+	    -->
 	    <th class="ui center">Action</th>
 	  </tr>
 	</thead>
@@ -227,25 +236,19 @@
   <div class="content">
     <p>
       <form class="ui form">
-	<div class="two fields">
-	  <div class="field required">
-	    <label>Remote Address / IP</label>
-	    <input type="text" name="host" placeholder="127.0.0.1">
-	  </div>
-	  <div class="field required">
-	    <label>Remote Port</label>
-	    <input type="text" name="port" value="8334">
-	  </div>
+	<div class="field required">
+	  <label>Amount (mSatoshi)</label>
+	  <input type="text" name="msatoshi" placeholder="10000">
 	</div>
 	<div class="field required">
-	  <label>Channel Capacity (Satoshi)</label>
-	  <input type="text" name="capacity" value="100000">
+	  <label>Description</label>
+	  <input type="text" name="description" placeholder="1 Cappucino con panna">
 	</div>
       </form>
     </p>
   </div>
   <div class="actions">
-    <div class="ui approve green button">Send</div>
+    <div class="ui approve green button">Create</div>
     <div class="ui cancel button">Cancel</div>
   </div>
 </div>
@@ -272,7 +275,7 @@
 	  </div>
 	  <div class="field required">
 	    <label>Remote Port</label>
-	    <input type="text" name="port" value="8334">
+	    <input type="text" name="port" value="9735">
 	  </div>
 	</div>
 	<div class="field required">

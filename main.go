@@ -21,7 +21,7 @@ var (
 
 var (
 	lightningSock    = flag.String("lightning-socket", filepath.Join(os.Getenv("HOME"), ".lightning/lightning-rpc"), "Location of the lightning unix domain socket.")
-	bitcoinRpcLoc    = flag.String("bitcoin-rpc", "localhost:18332", "Location where bitcoind is listening for RPC calls.")
+	bitcoinRpcLoc    = flag.String("bitcoin-rpc", "localhost:8332", "Location where bitcoind is listening for RPC calls.")
 	bitcoinRpcUser   = flag.String("bitcoin-user", "rpcuser", "")
 	bitcoinRpcPass   = flag.String("bitcoin-pass", "rpcpass", "")
 	manageBitcoind   = flag.Bool("start-bitcoind", true, "Do you want kugelblitz to manage bitcoind if it is not running?")
@@ -61,7 +61,7 @@ func main() {
 	lightningRpc := webui.NewLightning(lrpc)
 
 	bitcoinRpc = bitcoin.NewBitcoinRpc(
-		fmt.Sprintf("http://%s:%s@localhost:18332", *bitcoinRpcUser, *bitcoinRpcPass))
+		fmt.Sprintf("http://%s:%s@%s", *bitcoinRpcUser, *bitcoinRpcPass, *bitcoinRpcLoc))
 	nodeRpc := bitcoin.NewNode(&lightningRpc, bitcoinRpc)
 
 	b := maybeStartBitcoind(bitcoinRpc)

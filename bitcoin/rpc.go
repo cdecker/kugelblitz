@@ -173,32 +173,6 @@ func NewNode(lrpc *webui.Lightning, brpc *BitcoinRpc) *Node {
 
 func (n *Node) ConnectPeer(req *ConnectPeerRequest, res *lightningrpc.Empty) error {
 	fmt.Printf("Connecting to %s:%d", req.Host, req.Port)
-	var addrResp lightningrpc.NewAddressResponse
-	err := n.lightning.NewAddress(&lightningrpc.Empty{}, &addrResp)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-
-	var sendResp TxReference
-	err = n.bitcoinRpc.SendToAddress(&SendToAddressRequest{
-		Address: addrResp.Address,
-		Amount:  fmt.Sprintf("%f", float64(req.Capacity)*10e-8*1.01),
-	}, &sendResp)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-
-	var rawResp GetRawTransactionResponse
-	err = n.bitcoinRpc.GetRawTransaction(&sendResp, &rawResp)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-
-	err = n.lightning.AddFunds(rawResp.RawTransaction)
-
 	// Finally we need to tell lightningd to connect to that node
 	// with the funds provided
 	connReq := &lightningrpc.ConnectRequest{
@@ -206,7 +180,7 @@ func (n *Node) ConnectPeer(req *ConnectPeerRequest, res *lightningrpc.Empty) err
 		Port:   req.Port,
 		NodeId: req.NodeId,
 	}
-	err = n.lightning.Connect(connReq, &lightningrpc.Empty{})
+	err := n.lightning.Connect(connReq, &lightningrpc.Empty{})
 	if err != nil {
 		log.Error(err)
 	}
@@ -251,6 +225,26 @@ func (n *Node) GetHistory(req *HistoryReq, resp *lightningrpc.ListPaymentsResp) 
 	if err != nil {
 		return err
 	}
+	fmt.Println(resp)
 
+	return nil
+}
+
+type State struct {
+	Balance uint64 `json:"balance"`
+}
+
+func (n *Node) GetState(e *lightningrpc.Empty, state *State) error {
+	res := lightningrpc.ListFundsResponse{}
+	err := n.lightning.RPC.ListFunds(e, &res)
+	if err != nil {
+		return err
+	}
+	for _, o := range res.Outputs {
+		state.Balance += o.Value
+	}
+	for _, c := range res.Channels {
+		state.Balance += c.ChannelSatoshi
+	}
 	return nil
 }

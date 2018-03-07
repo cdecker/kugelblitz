@@ -1,6 +1,8 @@
 package webui
 
 import (
+	"fmt"
+
 	lr "github.com/cdecker/kugelblitz/lightningrpc"
 )
 
@@ -35,8 +37,8 @@ func (l *Lightning) GetInfo(_ *lr.Empty, res *lr.GetInfoResponse) error {
 	return err
 }
 
-func (l *Lightning) GetPeers(_ *lr.Empty, res *lr.GetPeersResponse) error {
-	peers, err := l.lrpc.GetPeers()
+func (l *Lightning) ListPeers(_ *lr.Empty, res *lr.ListPeersResponse) error {
+	peers, err := l.lrpc.ListPeers()
 	*res = peers
 	return err
 }
@@ -86,11 +88,14 @@ func (l *Lightning) GetPaymentRequestInfo(req *PaymentRequestInfoRequest, res *P
 		PayRequest: req.Destination,
 	}
 
+	fmt.Println(req2)
+
 	res2 := lr.DecodePayResponse{}
 	err := l.lrpc.DecodePay(&req2, &res2)
 	if err != nil {
 		return err
 	}
+	fmt.Println(res2)
 
 	routeReq := &lr.GetRouteRequest{
 		Destination: res2.Payee,

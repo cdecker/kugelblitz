@@ -15,7 +15,7 @@ var info = {
   bitcoin: {}
 };
 
-var updateInterval = 1000;
+var updateInterval = 10000;
 
 var sendPaymentData = null;
 
@@ -34,18 +34,25 @@ function d3jsonrpc(url, method, args, cb) {
   );
 }
 
+function updateState() {
+    d3jsonrpc('/rpc/', "Node.GetState", {}, function(terror, error, data){
+	if (error || terror) {
+	    console.log("Error retrieving the current state", terror, error, data);
+	    return;
+	}
+	$("#balance").html(data.balance/1000/1000/100).show();
+    });
+}
+
 function updateHistory() {
     d3jsonrpc('/rpc/', "Node.GetHistory", {}, function(terror, error, data){
-	console.log(data);
-    var tbody = d3.select('#historyTbl > tbody');
-    var rows = tbody.selectAll("tr");
+	var rows = d3.selectAll('#historyTbl > tbody').selectAll("tr");
     if (error) {
       rows.remove();
     } else if(terror) {
       transportFailure(terror);
     } else {
-
-      rows = rows.data(data);
+      rows = rows.data(data.payments);
       rows.enter().append("tr");
 	rows.exit().remove();
 	rows.html(function(d) {
@@ -61,7 +68,7 @@ function updateHistory() {
 }
 
 function updatePeerTable() {
-  d3jsonrpc('/rpc/', "Lightning.GetPeers", {}, function(terror, error, data){
+  d3jsonrpc('/rpc/', "Lightning.ListPeers", {}, function(terror, error, data){
     var tbody = d3.select('#peersTbl > tbody');
     var rows = tbody.selectAll("tr");
     if (error) {
@@ -74,8 +81,8 @@ function updatePeerTable() {
       rows.exit().remove();
       rows.html(function(d) {
         return ("<td>" +
-                d.peerid.substring(0,15) + "...</td><td>"+ d.connected+"</td><td>" +
-                d.state +"</td><td><button class='ui icon button open-connect-modal negative tiny disconnect-button' data-peerid='" + d.peerid + "'><i class='minus circle icon'></i> Disconnect</button></td></tr>");
+                d.id.substring(0,66) + "</td><!--<td>"+ d.connected+"</td>--><!--<td>" +
+                d.state +"</td>--><td><button class='ui icon button open-connect-modal negative tiny disconnect-button' data-peerid='" + d.peerid + "'><i class='minus circle icon'></i> Disconnect</button></td></tr>");
       });
       rows.attr('class', function(d){ return stateColors[d.state]; });;
     }
@@ -110,7 +117,7 @@ function updateLightningInfo() {
 
 function updateBitcoinInfo() {
   d3jsonrpc("/rpc/", "BitcoinRpc.GetInfo", {}, function(terror, error, r){
-    if (error){
+    if (terror || error || r == null){
       console.log("Error retrieving bitcoind info", error);
       setBitcoinState('red', "Could not contact <em>bitcoind</em>, maybe we just need to wait?")
       return;
@@ -126,10 +133,10 @@ function updateBitcoinInfo() {
       $("#btc-error").html(error).show();
       data = [];
     }else if(r.balance == 0){
-      d3jsonrpc("/rpc/", "Node.GetFundingAddr", {}, function(terror, error, data){
-        console.log(error, data.addr);
-        $("#btc-fund-addr").html(data.addr);
-      });
+      //d3jsonrpc("/rpc/", "Node.GetFundingAddr", {}, function(terror, error, data){
+      //  console.log(error, data.addr);
+      //  $("#btc-fund-addr").html(data.addr);
+      //});
       $("#btc-no-funds-error").show();
       $('#btcinfo').removeClass('green').addClass("red").addClass("attached");
       $("#btc-error").html(error).hide();
@@ -146,9 +153,7 @@ function updateBitcoinInfo() {
 }
 
 function updateKugelblitzInfo() {
-  console.log("Updating kugelblitz")
   d3jsonrpc("/rpc/", "Node.GetInfo", {}, function(terror, error, r){
-    console.log(terror, error, r);
     if (error || terror){
       console.log("Error retrieving kugelblitz info", error);
       setKugelblitzState('red', "Could not retrieve information from Kugelblitz: " + error);
@@ -160,9 +165,9 @@ function updateKugelblitzInfo() {
 }
 
 function updateInfo(){
-  updateLightningInfo();
-  updateBitcoinInfo();
-  updateKugelblitzInfo();
+  //updateLightningInfo();
+  //updateBitcoinInfo();
+  //updateKugelblitzInfo();
 }
 
 function serializeFormData(form) {
@@ -187,8 +192,9 @@ $(document).ready(function(){
   updatePeerTable()
   window.setInterval(updateInfo, updateInterval);
   updateInfo();
-//  window.setInterval(updateInfo, updateHistory);
-    updateHistory();
+  window.setInterval(updateHistory, updateInterval);
+  updateHistory();
+  window.setInterval(updateState, 1000);
 
   $('.open-connect-modal').click(function(){
     $("#connect-dialog").modal("show");
