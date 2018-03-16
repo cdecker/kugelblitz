@@ -61,7 +61,7 @@ type Channel struct {
 	Delay           uint
 }
 
-type GetChannelsResponse struct {
+type ListChannelsResponse struct {
 	Channels []Channel `json:"channels"`
 }
 
@@ -134,9 +134,9 @@ func (lr *LightningRpc) GetInfo() (GetInfoResponse, error) {
 	return res, err
 }
 
-func (lr *LightningRpc) GetChannels() (GetChannelsResponse, error) {
-	res := GetChannelsResponse{}
-	err := lr.call("getchannels", &Empty{}, &res)
+func (lr *LightningRpc) ListChannels() (ListChannelsResponse, error) {
+	res := ListChannelsResponse{}
+	err := lr.call("listchannels", &Empty{}, &res)
 	return res, err
 }
 
@@ -207,13 +207,13 @@ type Node struct {
 	Addresses []NodeAddress `json:"addresses"`
 }
 
-type GetNodesResponse struct {
+type ListNodesResponse struct {
 	Nodes []Node `json:"nodes"`
 }
 
-func (lr *LightningRpc) GetNodes() (GetNodesResponse, error) {
-	res := GetNodesResponse{}
-	err := lr.call("getnodes", &Empty{}, &res)
+func (lr *LightningRpc) ListNodes() (ListNodesResponse, error) {
+	res := ListNodesResponse{}
+	err := lr.call("listnodes", &Empty{}, &res)
 	return res, err
 }
 
