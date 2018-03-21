@@ -53,12 +53,15 @@ type Peer struct {
 type Channel struct {
 	From            string `json:"source"`
 	To              string `json:"destination"`
-	BaseFee         uint   `json:"base_fee_millisatoshi"`
-	ProportionalFee uint   `json:"fee_per_millionth"`
+	BaseFee         uint64 `json:"base_fee_millisatoshi"`
+	ProportionalFee uint64 `json:"fee_per_millionth"`
 	ShortChannelId  string `json:"short_channel_id"`
 	Flags           uint
 	LastUpdate      uint64 `json:"last_update"`
 	Delay           uint
+	Satoshis        uint64
+	Active          bool `json:"active"`
+	Public          bool `json:"public"`
 }
 
 type ListChannelsResponse struct {
@@ -203,8 +206,11 @@ type NodeAddress struct {
 }
 
 type Node struct {
-	Id        string        `json:"nodeid"`
-	Addresses []NodeAddress `json:"addresses"`
+	Id         string        `json:"nodeid"`
+	Addresses  []NodeAddress `json:"addresses"`
+	Color      string        `json:"color"`
+	Alias      string        `json:"alias"`
+	LastUpdate uint32        `json:"last_timestamp"`
 }
 
 type ListNodesResponse struct {
